@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { Button, ErrorSummary } from "@qf/design-system";
+import { Button, ErrorSummary, useTrack } from "@qf/design-system";
 import { holds, readStep, type EvalContext, type Expr, type JsonValue, type StepDef } from "@qf/journey-engine";
 import type { StepView } from "@/lib/step-view";
 import type { StepFormState } from "@/app/quote/form-state";
@@ -41,6 +41,11 @@ export function StepForm({ step, view, action, values, ctx, serverVisible, autoL
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const track = useTrack();
+  useEffect(() => {
+    for (const error of state.errors) track({ action: "validationError", field: error.fieldId, code: error.code });
+  }, [state.errors, track]);
+
   // Prefix the page title on errors (WCAG 2.4.2 / 3.3.1): it is the first thing announced.
   useEffect(() => {
     const base = document.title.replace(/^Error: /, "");
@@ -50,10 +55,10 @@ export function StepForm({ step, view, action, values, ctx, serverVisible, autoL
   // Conditional reveal: re-evaluate showWhen as the user answers.
   const onChange = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
-      const next = readStep(step, new FormData(event.currentTarget)).values;
+      const next = readStep(step, new FormData(event.currentTarget), { today: ctx.today }).values;
       setLive((current) => ({ ...current, ...next }));
     },
-    [step],
+    [step, ctx.today],
   );
 
   const visible = (id: string, expr: Expr | undefined) => {

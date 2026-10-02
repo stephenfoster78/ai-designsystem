@@ -63,7 +63,7 @@ function checkRule(rule: ValidationRule, value: JsonValue, ctx: Pick<EvalContext
     case "notPast":
       return isIsoDate(value) && value < ctx.today ? { code: "notPast" } : null;
     case "maxDaysAhead":
-      return isIsoDate(value) && value > addDays(ctx.today, rule.value) ? { code: "maxDaysAhead", params: { days: rule.value } } : null;
+      return isIsoDate(value) && value > addDays(ctx.today, rule.value) ? { code: "maxDaysAhead", params: { days: rule.value, latest: addDays(ctx.today, rule.value) } } : null;
     case "withinYears":
       return isIsoDate(value) && value < subtractYears(ctx.today, rule.value) ? { code: "withinYears", params: { years: rule.value } } : null;
     case "minYearsAgo":

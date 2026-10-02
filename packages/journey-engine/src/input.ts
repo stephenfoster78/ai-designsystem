@@ -1,4 +1,4 @@
-import { parseDateParts } from "./dates";
+import { addDays, parseDateParts, parseUkDate } from "./dates";
 import type { AddressValue, Answers, FieldDef, FieldError, GroupDef, JsonValue, RawInput, VehicleValue } from "./types";
 
 /** The subset of FormData / URLSearchParams the engine needs. */
@@ -41,6 +41,13 @@ export const addressInputNames = (id: string) => ({
   manual: `${id}-manual`,
 });
 
+export const startDateInputNames = (id: string) => ({ choice: `${id}-choice`, date: id });
+
+export interface ReadOptions {
+  /** Today in the journey's time zone (ISO), for fields that resolve relative dates. */
+  today?: string;
+}
+
 export const normalisePostcode = (value: string) => {
   const compact = value.replace(/\s+/g, "").toUpperCase();
   return compact.length > 3 ? `${compact.slice(0, -3)} ${compact.slice(-3)}` : compact;
@@ -48,8 +55,20 @@ export const normalisePostcode = (value: string) => {
 
 type Read = { value: JsonValue | undefined; raw: RawInput[string]; error?: FieldError };
 
-function readField(field: FieldDef, source: InputSource): Read {
+function readField(field: FieldDef, source: InputSource, options: ReadOptions): Read {
   switch (field.type) {
+    case "startDate": {
+      const names = startDateInputNames(field.id);
+      const raw = { choice: str(source.get(names.choice)), date: str(source.get(names.date)) };
+      if (raw.choice === "today" || raw.choice === "tomorrow") {
+        if (!options.today) throw new Error(`readStep needs options.today to read "${field.id}"`);
+        return { value: raw.choice === "today" ? options.today : addDays(options.today, 1), raw };
+      }
+      if (raw.choice !== "other") return { value: null, raw };
+      if (!raw.date.trim()) return { value: null, raw, error: { code: "dateRequired" } };
+      const parsed = parseUkDate(raw.date);
+      return parsed.ok ? { value: parsed.value, raw } : { value: null, raw, error: { code: parsed.code } };
+    }
     case "repeater":
       // Items are added, changed and removed through their own actions, never through the step form.
       return { value: undefined, raw: "" };
@@ -123,11 +142,11 @@ function readField(field: FieldDef, source: InputSource): Read {
 }
 
 /** Reads every field of a step (or repeater item step) from submitted form data. */
-export function readStep(step: { groups: GroupDef[] }, source: InputSource): StepInput {
+export function readStep(step: { groups: GroupDef[] }, source: InputSource, options: ReadOptions = {}): StepInput {
   const result: StepInput = { values: {}, raw: {}, parseErrors: {} };
   for (const group of step.groups) {
     for (const field of group.fields) {
-      const { value, raw, error } = readField(field, source);
+      const { value, raw, error } = readField(field, source, options);
       if (value !== undefined) result.values[field.id] = value;
       result.raw[field.id] = raw;
       if (error) result.parseErrors[field.id] = error;

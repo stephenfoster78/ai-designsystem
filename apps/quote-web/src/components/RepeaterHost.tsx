@@ -137,7 +137,7 @@ export function RepeaterHost({ stepId, field, view, ctx, error }: RepeaterHostPr
         createPortal(
           <Dialog open={Boolean(editing)} title={editing?.isNew ? repeater.itemTitle : repeater.itemEditTitle} onClose={close} size="l">
             {editing && current && stepView && (
-              <form key={`${current.id}-${attempt}`} onSubmit={submit} onChange={(e) => setLive(readStep(current, new FormData(e.currentTarget)).values)} noValidate>
+              <form key={`${current.id}-${attempt}`} onSubmit={submit} onChange={(e) => setLive(readStep(current, new FormData(e.currentTarget), { today: ctx.today }).values)} noValidate>
                 <ErrorSummary items={(result?.errors ?? []).map((e) => ({ targetId: e.targetId, message: e.message }))} />
                 {total > 1 && (
                   <p className="mb-1 text-body-small text-ink-muted">

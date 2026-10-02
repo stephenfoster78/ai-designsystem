@@ -8,6 +8,7 @@ import {
   Radios,
   RegLookup,
   Select,
+  StartDateInput,
   TextInput,
   Typeahead,
   type AddressLookupResult,
@@ -72,6 +73,21 @@ export function Field({ field, value, raw, error, resolved, lookup, mode, focusO
           precision={field.precision}
         />
       );
+    case "startDate": {
+      const config = field.startDate!;
+      const rawRecord = asRecord(raw);
+      return (
+        <StartDateInput
+          {...common}
+          errorTarget={error?.subTarget === "date" ? "date" : "choice"}
+          today={config.today}
+          maxDaysAhead={config.maxDaysAhead}
+          value={typeof value === "string" ? value : null}
+          raw={rawRecord ? { choice: rawRecord.choice, date: rawRecord.date } : undefined}
+          text={config.calendarTitle ? { calendarTitle: config.calendarTitle } : undefined}
+        />
+      );
+    }
     case "typeahead": {
       const saved = field.options?.find((o) => o.value === value)?.label ?? "";
       return <Typeahead {...common} options={field.options ?? []} defaultInputValue={typeof raw === "string" ? raw : saved} />;
@@ -101,7 +117,7 @@ export function Field({ field, value, raw, error, resolved, lookup, mode, focusO
       return (
         <AddressLookup
           {...common}
-          errorTarget={error?.subTarget}
+          errorTarget={error?.subTarget as "postcode" | "address" | "line1" | "town" | undefined}
           value={(resolved ?? value) as never}
           raw={asRecord(raw)}
           lookup={addressLookup}

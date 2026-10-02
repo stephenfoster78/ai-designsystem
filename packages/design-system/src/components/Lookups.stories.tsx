@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AddAnotherList } from "./AddAnotherList";
 import { AddressLookup } from "./AddressLookup";
 import { RegLookup, type LookupVehicleTree } from "./RegLookup";
+import { StartDateInput } from "./StartDateInput";
 import { Typeahead } from "./Typeahead";
 
 const meta: Meta = { title: "Components/Lookups and lists" };
@@ -96,4 +97,35 @@ export const AddAnother: Story = {
       />
     );
   },
+};
+
+export const StartDate: Story = {
+  name: "Start date input",
+  render: () => (
+    <form className="max-w-[40rem]" onSubmit={(e) => e.preventDefault()}>
+      <StartDateInput
+        id="coverStart"
+        label="When do you want your cover to start?"
+        hint="Your cover can start today or on any date up to {latest}."
+        today={new Date().toISOString().slice(0, 10)}
+        text={{ calendarTitle: "Choose a cover start date" }}
+      />
+    </form>
+  ),
+};
+
+export const StartDateError: Story = {
+  name: "Start date input: error",
+  render: () => (
+    <form className="max-w-[40rem]" onSubmit={(e) => e.preventDefault()}>
+      <StartDateInput
+        id="coverStart"
+        label="When do you want your cover to start?"
+        today={new Date().toISOString().slice(0, 10)}
+        raw={{ choice: "other", date: "31/02/2026" }}
+        error="Enter a real date in the format day/month/year, like 15/10/2026"
+        errorTarget="date"
+      />
+    </form>
+  ),
 };

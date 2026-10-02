@@ -25,3 +25,6 @@ export { Typeahead, type TypeaheadOption, type TypeaheadProps } from "./componen
 export { RegLookup, type LookupVehicle, type LookupVehicleTree, type RegLookupProps, type VehicleLookupResult } from "./components/RegLookup";
 export { AddressLookup, type AddressLookupProps, type AddressLookupResult, type LookupAddress } from "./components/AddressLookup";
 export { AddAnotherList, type AddAnotherItem, type AddAnotherListProps } from "./components/AddAnotherList";
+export { AnalyticsProvider, useTrack, type AnalyticsEvent, type Track } from "./analytics";
+export { CalendarDialog, type CalendarDialogProps } from "./components/CalendarDialog";
+export { StartDateInput, type StartDateChoice, type StartDateInputProps } from "./components/StartDateInput";

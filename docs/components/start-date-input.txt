@@ -1,0 +1,360 @@
+
+SECTION: DESIGN SPECIFICATION
+============================================================
+
+Component Purpose:
+Capture a start date within a short future window (for example insurance cover starting today
+up to 30 days ahead). Offers one-tap choices for the most common answers, a typed date for
+anything else, and an optional calendar in a modal dialog. Reusable for any "when should this
+start" question (cover start, policy change effective date, renewal date).
+
+Component Structure:
+- Fieldset with legend (the question)
+- Hint text (states the allowed window with the actual last date)
+- Error message (only after submit)
+- Radio options:
+  - Today (with the date, e.g. "Today (Friday 2 October)")
+  - Tomorrow (with the date, e.g. "Tomorrow (Saturday 3 October)")
+  - Another date
+- Conditional reveal under "Another date":
+  - Date text input (DD/MM/YYYY), with its own label and hint
+  - "Choose a date from the calendar" button (visible text, not icon-only)
+- Calendar modal (dialog):
+  - Heading "Choose a cover start date"
+  - Close button (× with accessible name "Close")
+  - One month grid per month the window covers (usually two)
+  - Cancel action
+
+Visual Requirements:
+- Radios: standard design system radios, 44px minimum target
+- Date input: width for 10 characters; standard border, error border and focus ring tokens
+- Calendar button: secondary button style, sits beside the input (wraps below on narrow screens)
+- Calendar modal: standard dialog; months side by side on wide screens, stacked under 520px
+- Day cells: minimum 44×44px; today has an outline; selected day uses brand fill with inverse
+  text; unavailable days use muted text and a strikethrough-free, non-interactive style
+- No disabled month navigation buttons: only the months in the window are shown
+
+States:
+- Default (nothing selected)
+- Today / Tomorrow selected
+- Another date selected, input empty
+- Another date with a typed date
+- Error: no option chosen
+- Error: no date entered / invalid date / in the past / after the last date
+- Calendar modal open (with or without a selected date)
+
+Typography & Tokens:
+- Legend: body bold (or heading when the question is the page heading)
+- Option labels: body
+- Hints: body-small, ink-muted
+- Error: body bold, ink-error, "Error:" prefix for screen readers
+- Calendar month heading: heading-s; weekday headings: body-small bold
+- Tokens: brand, brand-hover, ink, ink-muted, ink-inverse, ink-error, line-strong, line-error,
+  focus, focus-ink, surface, surface-subtle, radius-small, size-target-min
+
+============================================================
+SECTION: TECHNICAL SPECIFICATION
+============================================================
+
+Input Rules:
+- Options: today | tomorrow | other
+- Typed date accepted formats (forgiving, day first):
+  - DD/MM/YYYY, D/M/YYYY
+  - separators / - . , or spaces
+  - DDMMYYYY and DDMMYY (no separators, for numeric keypads without a slash key)
+  - two-digit years are 20xx
+- Impossible dates (31/02/2026) are invalid
+- Typed text is trimmed; nothing the user types is stripped or rewritten while typing
+
+Window:
+- earliest = today (UK time, Europe/London)
+- latest   = today + maxDaysAhead (default 30, inclusive)
+- "Today" is always computed on the server and passed to the component; the device clock is
+  never trusted
+
+Validation (on submit only, server-authoritative):
+- No option chosen → error
+- "Another date" with empty input → error
+- Unparseable or impossible date → error
+- Before today → error
+- After latest → error
+
+Error messages:
+- Select when you want your cover to start
+- Enter the date you want your cover to start
+- Enter a real date, like 15/10/2026
+- Cover start date must be today or in the future
+- Cover start date must be on or before {latest, e.g. 1 November 2026}
+
+Stored value:
+- Always an ISO date (YYYY-MM-DD), whichever option was used. Downstream (pricing, summary)
+  never needs to know which option produced it.
+
+Form data posted (works without JavaScript):
+- {id}-choice = today | tomorrow | other
+- {id}        = typed date text (only used when choice = other)
+
+Redisplay:
+- Saved ISO equal to today → "Today" selected; equal to tomorrow → "Tomorrow"; otherwise
+  "Another date" with the date shown as DD/MM/YYYY
+- After a failed submit, exactly what was typed is shown again
+
+Analytics (optional, consent-gated):
+- Component emits events through an analytics adapter; it never calls a vendor directly
+- Events: fieldFocus (first interaction), valueSelected { inputMethod: quickSelect |
+  textInput | calendarPicker }, calendarOpened, calendarClosed { selected: boolean },
+  validationError { code }
+- Error codes are sent, not message text, so reports survive copy changes
+- Events are only sent when analytics consent is given
+
+============================================================
+SECTION: ACCESSIBILITY SPECIFICATION
+============================================================
+
+Structure:
+- Fieldset and legend group the question; hint linked with aria-describedby
+- Option labels include the actual date, so "Today" is unambiguous to everyone
+- Revealed input has its own label ("Date") and hint, linked with aria-describedby
+- Calendar button has visible text; aria-haspopup="dialog"
+
+Errors:
+- Shown only after submit; error summary at top of page takes focus and links to:
+  - the first radio (no option chosen)
+  - the date input (date errors)
+- Inline error has a visually hidden "Error:" prefix; input gets aria-invalid="true"
+- No validation on blur and no assertive live regions
+
+Calendar modal:
+- Native <dialog> opened with showModal(): page behind is inert, focus is contained
+- Labelled by its heading; focus moves to the selected date, else today, else the first
+  available date
+- Each month is a table (role grid) with a caption (month name) and column headers with full
+  weekday names (abbreviated visually)
+- One tab stop for all the days (roving tabindex); Tab moves between the grid, Cancel and
+  Close
+- Keyboard:
+  - Arrow Left / Right: previous / next day
+  - Arrow Up / Down: same day previous / next week
+  - Home / End: first / last day of the week
+  - Page Up / Page Down: same day previous / next month
+  - Enter / Space: choose the focused day
+  - Escape: close without choosing
+  - Movement is clamped to the allowed window
+- Each day button's accessible name is the full date, e.g. "Thursday 15 October 2026";
+  today adds ", today"; the selected day has aria-pressed / aria-selected
+- Unavailable days are not buttons (plain text, aria-disabled) so they are never focused
+- Closing (choose, Cancel, Close button or Escape) returns focus to the calendar button,
+  except after choosing, when focus moves to the date input, which now holds the date
+- The calendar is an extra way in, never the only one: typing a date always works
+
+Mobile & zoom:
+- Day targets at least 44×44px; months stack on narrow screens
+- Dialog is full width on small screens and scrolls internally; works at 400% zoom (1.4.10)
+- No content relies on hover
+
+Contrast:
+- All text and boundaries meet WCAG 2.2 AA via tokens (contrast-tested in CI)
+- Focus: two-tone ring (yellow inner, dark outer) visible on light and brand surfaces
+
+============================================================
+SECTION: TEST PLAN
+============================================================
+
+Objectives:
+Validate choice selection, typed date parsing, window validation, calendar modal behaviour,
+keyboard support, screen reader output and no-JavaScript fallback.
+
+Scope:
+Functional, accessibility, integration (server validation, stored ISO value), regression.
+
+Environments:
+Chrome, Firefox, Safari, Edge
+Desktop + mobile (iOS Safari numeric keypad, Android Chrome)
+NVDA + Firefox/Chrome, JAWS + Chrome, VoiceOver iOS + macOS, TalkBack
+
+Summary:
+All functional and accessibility tests pass with no critical defects.
+
+============================================================
+SECTION: FUNCTIONAL TESTS
+============================================================
+
+Choice Tests:
+- Today stores today's ISO date (UK time)
+- Tomorrow stores tomorrow's ISO date
+- Another date reveals the input and calendar button; other choices hide them
+
+Parsing Tests:
+- 15/10/2026, 15-10-2026, 15.10.2026, 15 10 2026 → 2026-10-15
+- 15102026 and 151026 → 2026-10-15
+- 1/2/2027 → 2027-02-01
+- 31/02/2026 → invalid
+- empty with "Another date" → required error
+
+Window Tests:
+- Today accepted; yesterday rejected
+- today + 30 accepted; today + 31 rejected with the latest date in the message
+
+Calendar Tests:
+- Opens in a modal from the button; Close, Cancel and Escape close it without changing the value
+- Choosing a day fills the input as DD/MM/YYYY and selects "Another date"
+- Days outside the window cannot be chosen
+- Opening again focuses the currently selected date
+
+Redisplay Tests:
+- Saved today/tomorrow/other values reselect the right option
+- Failed submit keeps the typed text
+
+============================================================
+SECTION: ACCESSIBILITY TESTS
+============================================================
+
+Keyboard:
+- Every control reachable and operable; calendar grid is one tab stop
+- Arrow, Home/End, Page Up/Down behave as specified and stay within the window
+- Escape closes the calendar; focus returns as specified
+- No keyboard trap outside the modal; inside, focus stays in the modal
+
+Screen Reader:
+- Legend, hint and option dates announced
+- Revealed input announced with its label and hint
+- Dialog announced with its name and role; month captions and full weekday names announced
+- Day names announced as full dates with today/selected states
+- Errors announced via the error summary after submit, not on blur
+
+Visual:
+- 400% zoom and 320px width without horizontal scrolling of the page
+- Focus visible on every control, including days
+- Today and selected states not shown by colour alone (outline and fill + text)
+
+Automated:
+- axe: no violations in all states (default, revealed, error, calendar open)
+
+============================================================
+SECTION: REGRESSION TESTS
+============================================================
+
+Regression Coverage:
+- Parsing formats
+- Window boundaries across month and year ends (e.g. 20 December → 19 January)
+- UK time boundary at midnight (BST/GMT changeover)
+- Calendar keyboard model
+- Stored ISO value and answers summary formatting
+
+============================================================
+SECTION: AUTOMATION TESTS
+============================================================
+
+Recommended Automated Tests:
+- Engine: parse formats, choice → ISO, window rules (unit)
+- Component: reveal, calendar open/close, keyboard navigation, selection fills input, axe (jsdom)
+- End to end: quick choice path, typed date path, calendar path, errors and summary links,
+  axe with calendar open, mobile viewport, no-JavaScript submit
+
+============================================================
+SECTION: ACCEPTANCE CRITERIA
+============================================================
+
+Acceptance Criteria:
+- All functional, accessibility and regression tests pass
+- No critical defects
+- Value stored as ISO regardless of input method
+- Works without JavaScript (radios + typed date; calendar enhancement only)
+- Behaves identically across HTML and React versions
+
+============================================================
+SECTION: IMPLEMENTATION SUMMARY (HTML/CSS/JS)
+============================================================
+
+HTML Structure Summary:
+- fieldset > legend + hint
+- three radios (name {id}-choice); "Another date" controls the revealed block
+- revealed block: label + hint + input (name {id}) + button "Choose a date from the calendar"
+- <dialog> with heading, close button, one <table role="grid"> per month, Cancel button
+
+CSS Summary:
+- Token-driven; radios and input from design system
+- Calendar: CSS grid of 7 columns, 44px min cells; months flex-wrap, stacked under 520px
+
+JavaScript Summary:
+- reveal(): show/hide the date block from the selected radio
+- openCalendar(): showModal(); focus selected/today/first available day
+- moveFocus(key): compute target date, clamp to window, set roving tabindex, focus
+- choose(date): write DD/MM/YYYY to the input, check "Another date", close, focus input
+- No blur validation; server validates on submit
+
+============================================================
+SECTION: IMPLEMENTATION SUMMARY (REACT/NEXT/TAILWIND)
+============================================================
+
+Component Summary:
+- <StartDateInput id label hint today maxDaysAhead value raw error errorTarget text onAnalytics />
+- `today` (ISO) comes from the server; option labels and the latest date are formatted from it
+- Choice and typed text are uncontrolled form fields, so the form posts without JavaScript
+- Calendar uses the design system <Dialog> (native dialog, Escape, Close button)
+- Engine field type "startDate" reads {id}-choice + {id}, resolves to ISO with the server's
+  today, and applies notPast / maxDaysAhead rules
+
+Modal Summary:
+- role dialog via native <dialog>, aria-labelledby heading
+- Escape → close; Close button → close; Cancel → close
+- Choose → fill input, close, focus input
+
+============================================================
+SECTION: API SCHEMAS
+============================================================
+
+Field definition (journey schema):
+{ id: "coverStart", type: "startDate", required: true,
+  validate: [{ rule: "notPast" }, { rule: "maxDaysAhead", value: 30 }] }
+
+Stored answer:
+"coverStart": "2026-10-15"
+
+Analytics event (data layer, consent-gated):
+{ event: "fieldInteraction", journey: "motor", step: "carRegistration",
+  field: "coverStart", action: "valueSelected", inputMethod: "calendarPicker" }
+
+============================================================
+SECTION: INTEGRATION NOTES
+============================================================
+
+Integration Notes:
+- Server supplies today in UK time; the client never decides the window
+- If the chosen date has passed by the time of payment, the journey asks again before
+  taking payment (milestone 3)
+- Cover starting today begins from the time of purchase: say so near payment
+- Analytics adapter maps component events to the organisation's schema (e.g. Adobe eVars,
+  dataLayer events); components stay vendor-neutral
+
+============================================================
+SECTION: RESET FLOW
+============================================================
+
+Reset Flow:
+- Choosing Today or Tomorrow after typing a date keeps the typed text hidden but ignored
+- Clearing the input and choosing again behaves as default
+- Cancel/Escape in the calendar never changes the current value
+
+============================================================
+SECTION: FIGMA SPECIFICATION
+============================================================
+
+Structure:
+- Vertical auto layout: legend, hint, radios, revealed block
+- Revealed block: horizontal (input + calendar button), wraps on narrow frames
+- Calendar modal: dialog frame with header (title + close), months (horizontal, wrap),
+  footer (Cancel)
+- Variants: default, today, tomorrow, other-empty, other-filled, error-choice, error-date,
+  calendar-open
+- Properties: legend, hint, maxDaysAhead, showCalendar (boolean), errorMessage
+
+Tokens:
+- brand, brand-hover, ink, ink-muted, ink-inverse, ink-error
+- line-strong, line-error, focus, focus-ink
+- surface, surface-subtle, radius-small, size-target-min
+- body, body-small, heading-s
+
+============================================================
+END OF FILE
+============================================================

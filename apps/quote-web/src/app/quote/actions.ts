@@ -114,7 +114,7 @@ export async function submitStep(stepId: string, previous: StepFormState, formDa
   if (target && (verb === "lookup" || verb === "manual" || verb === "reset")) {
     const field = step.groups.flatMap((g) => g.fields).find((f) => f.id === target);
     if (!field) return { ...base, raw: null };
-    const input = readStep(step, formData);
+    const input = readStep(step, formData, { today: ctx.today });
     if (verb === "lookup") {
       const lookup = await runLookup(field, input, (key) => services.content.t(key, { label: services.content.t(`${field.id}.label`) }));
       return { ...base, raw: input.raw, lookups: { [field.id]: lookup }, focusField: field.id };
@@ -122,7 +122,7 @@ export async function submitStep(stepId: string, previous: StepFormState, formDa
     return { ...base, raw: input.raw, modes: { [field.id]: verb }, focusField: field.id };
   }
 
-  const input = await enrichInput(step.groups, readStep(step, formData));
+  const input = await enrichInput(step.groups, readStep(step, formData, { today: ctx.today }));
 
   if (intent === "save") {
     const answers = commitValid(motorJourney, step, input, ctx);
@@ -187,7 +187,7 @@ export async function saveItemStep(stepId: string, fieldId: string, itemStepId: 
   const existing = Array.isArray(ctx.answers[fieldId]) ? (ctx.answers[fieldId] as Answers[]) : [];
   if (typeof item[ITEM_ID] !== "string" || !existing.some((i) => i[ITEM_ID] === item[ITEM_ID])) item[ITEM_ID] = randomUUID();
 
-  const input = await enrichInput(itemStep.groups, readStep(itemStep, formData));
+  const input = await enrichInput(itemStep.groups, readStep(itemStep, formData, { today: ctx.today }));
   const result = commitItemStep(motorJourney, itemStep, input, item, ctx);
   if (!result.ok) return { errors: errorViews(result.errors), raw: input.raw };
 

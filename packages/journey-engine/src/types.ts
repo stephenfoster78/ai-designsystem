@@ -73,7 +73,9 @@ export type FieldType =
   /** Postcode lookup with manual fallback. Value: Address-shaped object. */
   | "address"
   /** A list of items, each answered through its own item steps (a modal journey). */
-  | "repeater";
+  | "repeater"
+  /** Start date in a short future window: Today / Tomorrow / Another date (+ calendar). Value: ISO date. */
+  | "startDate";
 
 export interface OptionDef {
   value: string;

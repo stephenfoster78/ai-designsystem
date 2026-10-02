@@ -26,8 +26,7 @@ export function Hint({ id, children }: { id: string; children: ReactNode }) {
 export function ErrorMessage({ id, children }: { id: string; children: ReactNode }) {
   return (
     <p id={id} className="mb-3 font-bold text-ink-error">
-      <VisuallyHidden>Error: </VisuallyHidden>
-      {children}
+      <VisuallyHidden>Error:</VisuallyHidden> {children}
     </p>
   );
 }

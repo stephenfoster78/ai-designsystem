@@ -66,3 +66,29 @@ export function isoToParts(iso: unknown): DateParts {
   const [year, month, day] = iso.split("-") as [string, string, string];
   return { day: String(Number(day)), month: String(Number(month)), year };
 }
+
+/**
+ * Forgiving UK (day-first) date parser for a single text field: accepts D/M/YYYY with / - . ,
+ * or spaces as separators, DDMMYYYY or DDMMYY without separators (numeric keypads have no
+ * slash key), and two-digit years as 20xx. Returns ISO, null for empty, or an error.
+ */
+export function parseUkDate(text: string): { ok: true; value: string | null } | { ok: false; code: "invalidDate" } {
+  const s = text.trim();
+  if (!s) return { ok: true, value: null };
+  let parts: string[];
+  if (/^\d{8}$/.test(s)) parts = [s.slice(0, 2), s.slice(2, 4), s.slice(4)];
+  else if (/^\d{6}$/.test(s)) parts = [s.slice(0, 2), s.slice(2, 4), s.slice(4)];
+  else parts = s.split(/[\s/.,-]+/);
+  if (parts.length !== 3 || !parts.every((p) => /^\d+$/.test(p))) return { ok: false, code: "invalidDate" };
+  const [d, m, y] = parts as [string, string, string];
+  if (d.length > 2 || m.length > 2 || (y.length !== 2 && y.length !== 4)) return { ok: false, code: "invalidDate" };
+  const year = y.length === 2 ? `20${y}` : y;
+  const iso = `${year}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+  return isIsoDate(iso) ? { ok: true, value: iso } : { ok: false, code: "invalidDate" };
+}
+
+/** ISO date → DD/MM/YYYY. */
+export function isoToUk(iso: string): string {
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}

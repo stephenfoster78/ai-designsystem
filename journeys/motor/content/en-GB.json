@@ -7,7 +7,6 @@
   "section.your-quote.title": "Your quote",
   "section.review.title": "Review",
   "section.payment.title": "Payment",
-
   "error.required": "Enter {label}",
   "error.radio.required": "Select an answer",
   "error.select.required": "Select an option",
@@ -31,7 +30,6 @@
   "error.lookupNotFound": "We could not find a car with that registration. Check it, or find your car manually",
   "error.lookupInvalid": "Car registration must only include letters a to z, numbers and spaces, and be 8 characters or fewer",
   "error.addressNotFound": "We could not find any addresses for that postcode. Check it, or enter your address manually",
-
   "step.carRegistration.title": "Tell us about your car",
   "registration.label": "Car registration",
   "registration.hint": "For example, AB12 CDE. You can find it on your number plate or V5C logbook.",
@@ -65,11 +63,10 @@
   "imported.option.no": "No",
   "imported.error.required": "Select yes if the car was imported",
   "coverStart.label": "When do you want your cover to start?",
-  "coverStart.hint": "This must be within the next 30 days. For example, 27 10 2026.",
-  "coverStart.error.required": "Enter the date you want your cover to start",
+  "coverStart.hint": "Your cover can start today or on any date up to {latest}.",
+  "coverStart.error.required": "Select when you want your cover to start",
   "coverStart.error.notPast": "Cover start date must be today or in the future",
-  "coverStart.error.maxDaysAhead": "Cover start date must be within the next {days} days",
-
+  "coverStart.error.maxDaysAhead": "Cover start date must be on or before {latest}",
   "step.carUsage.title": "Owning and using the car",
   "purchased.label": "Have you bought the car yet?",
   "purchased.option.yes": "Yes",
@@ -123,7 +120,6 @@
   "overnightLocation.option.carPark": "In a car park",
   "overnightLocation.option.other": "Somewhere else",
   "overnightLocation.error.required": "Select where the car is parked overnight",
-
   "step.signIn.title": "Sign in or continue as a guest",
   "accountChoice.label": "How do you want to continue?",
   "accountChoice.hint": "Signed-in customers get Clubcard prices. You can still buy as a guest at our regular price.",
@@ -134,7 +130,6 @@
   "accountChoice.option.guest": "Continue as a guest",
   "accountChoice.error.required": "Select how you want to continue",
   "accountChoice.error.notAvailable": "Signing in is not available in this demo yet. Select continue as a guest",
-
   "step.yourDetails.title": "Your details",
   "title.label": "Title",
   "title.option.mr": "Mr",
@@ -202,7 +197,6 @@
   "marketingChannels.option.email": "Email",
   "marketingChannels.option.sms": "Text message",
   "marketingChannels.option.post": "Post",
-
   "step.occupation.title": "Your work",
   "employmentStatus.label": "What is your employment status?",
   "employmentStatus.option.employed": "Employed",
@@ -234,7 +228,6 @@
   "secondaryIndustry.hint": "Start typing, then choose from the list.",
   "secondaryIndustry.error.required": "Enter the industry of your other job and choose one from the list",
   "secondaryIndustry.error.noMatch": "Choose the industry of your other job from the list",
-
   "step.licence.title": "Your driving licence",
   "licenceType.label": "What type of driving licence do you have?",
   "licenceType.option.fullManual": "Full UK licence (manual)",
@@ -248,7 +241,6 @@
   "licenceDate.error.required": "Enter the month and year you got your licence",
   "licenceDate.error.notFuture": "The date you got your licence must be in the past",
   "licenceDate.error.beforeAge17": "The date you got your licence must be after your 17th birthday",
-
   "step.additionalDrivers.title": "Other drivers",
   "addDrivers.label": "Do you want to add other drivers to the policy?",
   "addDrivers.hint": "You can add up to 4. They must hold a driving licence.",
@@ -340,7 +332,6 @@
   "driverLicenceDate.error.required": "Enter the month and year they got their licence",
   "driverLicenceDate.error.notFuture": "The date they got their licence must be in the past",
   "driverLicenceDate.error.beforeAge17": "The date they got their licence must be after their 17th birthday",
-
   "step.householdCars.title": "Other cars in your household",
   "otherCarsInHousehold.label": "How many other cars are there in your household?",
   "otherCarsInHousehold.hint": "Do not include the car you are getting a quote for.",
@@ -355,7 +346,6 @@
   "otherCarsInsuredWithUs.option.no": "No",
   "otherCarsInsuredWithUs.option.notSure": "I’m not sure",
   "otherCarsInsuredWithUs.error.required": "Select yes if any of the other cars are insured with us",
-
   "step.claimsConvictions.title": "Claims and convictions",
   "who.option.you": "You",
   "hasClaims.label": "Have you or any other drivers had any accidents, claims or losses in the last 5 years?",
@@ -444,7 +434,6 @@
   "convictionBanMonths.error.invalidNumber": "Ban length must be a whole number of months, like 6",
   "convictionBanMonths.error.min": "Ban length must be 0 or more",
   "convictionBanMonths.error.max": "Ban length must be 120 months or fewer",
-
   "step.noClaims.title": "No claims discount",
   "ncdYears.label": "How many years of no claims discount do you have?",
   "ncdYears.hint": "Your current or previous insurer can tell you. It must be from the last 2 years.",
@@ -473,5 +462,9 @@
   "protectNcd.hint": "This costs extra. It means one or two claims in a year will not reduce your discount. You’ll see the price on your quote.",
   "protectNcd.option.yes": "Yes",
   "protectNcd.option.no": "No",
-  "protectNcd.error.required": "Select yes if you want to protect your no claims discount"
+  "protectNcd.error.required": "Select yes if you want to protect your no claims discount",
+  "coverStart.error.dateRequired": "Enter the date you want your cover to start",
+  "coverStart.error.invalidDate": "Enter a real date in the format day/month/year, like 15/10/2026",
+  "coverStart.calendarTitle": "Choose a cover start date",
+  "error.startDate.required": "Select an answer"
 }

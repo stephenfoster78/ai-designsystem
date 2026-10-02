@@ -57,7 +57,7 @@ export async function completeCarRegistration(page: Page, reg = "AB12 CDE") {
   await page.getByLabel("How many miles do you expect to drive in a year?").fill("8000");
   await radio(page, "Has the car been modified?", "No");
   await radio(page, "Was the car imported?", "No");
-  await fillDate(page, "When do you want your cover to start?", ukDate(1));
+  await page.getByRole("group", { name: "When do you want your cover to start?" }).getByLabel(/^Tomorrow \(/).check();
   await continueButton(page).click();
   await expect(page).toHaveURL(/\/quote\/car\/usage$/);
 }

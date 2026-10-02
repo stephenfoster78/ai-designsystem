@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import {
+  ukDate,
   completeCarRegistration,
   completeCarUsage,
   completeSignIn,
@@ -48,7 +49,7 @@ test("validation errors: summary takes focus, title is prefixed, links move focu
     "Enter how many miles you expect to drive in a year",
     "Select yes if the car has been modified",
     "Select yes if the car was imported",
-    "Enter the date you want your cover to start",
+    "Select when you want your cover to start",
   ]);
   await expectNoAxeViolations(page);
 
@@ -89,6 +90,64 @@ test.describe("car registration lookup", () => {
     await expectNoAxeViolations(page);
     await dialog.getByRole("button", { name: "Use this car" }).click();
     await expect(page.getByRole("region", { name: "Your car" })).toContainText("Toyota Yaris");
+  });
+});
+
+test.describe("cover start date", () => {
+  const ukLong = (days: number) => {
+    const { day, month, year } = ukDate(days);
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    return `${day} ${months[Number(month) - 1]} ${year}`;
+  };
+  const pad = (n: string) => n.padStart(2, "0");
+
+  test("typed dates are checked against the window, with the last date in the message", async ({ page }) => {
+    await startQuote(page);
+    const group = page.getByRole("group", { name: "When do you want your cover to start?" });
+    await expect(group).toContainText(`up to ${ukLong(30)}`);
+    await group.getByLabel("Another date").check();
+    const input = group.getByLabel("Date", { exact: true });
+    await input.fill("31/02/2027");
+    await continueButton(page).click();
+    const summary = page.getByTestId("error-summary");
+    await expect(summary).toContainText("Enter a real date in the format day/month/year");
+    await summary.getByRole("link").filter({ hasText: "Enter a real date" }).click();
+    await expect(page.getByRole("group", { name: "When do you want your cover to start?" }).getByLabel("Date", { exact: true })).toBeFocused();
+    await expectNoAxeViolations(page);
+
+    const tooLate = ukDate(31);
+    await page.getByRole("group", { name: "When do you want your cover to start?" }).getByLabel("Date", { exact: true }).fill(`${pad(tooLate.day)}${pad(tooLate.month)}${tooLate.year}`);
+    await continueButton(page).click();
+    await expect(page.getByTestId("error-summary")).toContainText(`Cover start date must be on or before ${ukLong(30)}`);
+  });
+
+  test("the calendar opens in a modal, works with the keyboard, and closes with Escape or Close", async ({ page }) => {
+    await startQuote(page);
+    const group = page.getByRole("group", { name: "When do you want your cover to start?" });
+    await group.getByLabel("Another date").check();
+    const openButton = group.getByRole("button", { name: "Choose a date from the calendar" });
+    await openButton.click();
+    const dialog = page.getByRole("dialog", { name: "Choose a cover start date" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole("button", { name: /, today$/ })).toBeFocused();
+    await expectNoAxeViolations(page);
+
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    await expect(openButton).toBeFocused();
+
+    await openButton.click();
+    await dialog.getByRole("button", { name: "Close" }).click();
+    await expect(dialog).toBeHidden();
+
+    await openButton.click();
+    await page.keyboard.press("ArrowDown"); // a week from today
+    await page.keyboard.press("Enter");
+    await expect(dialog).toBeHidden();
+    const week = ukDate(7);
+    const input = group.getByLabel("Date", { exact: true });
+    await expect(input).toHaveValue(`${pad(week.day)}/${pad(week.month)}/${week.year}`);
+    await expect(input).toBeFocused();
   });
 });
 

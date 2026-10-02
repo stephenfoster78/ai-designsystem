@@ -38,7 +38,7 @@ function formatAnswer(field: FieldDef, value: JsonValue | undefined, content: Co
   const optionLabel = (v: string) => options?.find((o) => o.value === v)?.label ?? v;
   if (Array.isArray(value)) return value.map((v) => optionLabel(String(v))).join(", ");
   if (options) return optionLabel(String(value));
-  if (field.type === "date" && isIsoDate(value)) return formatDate(value, field.precision);
+  if ((field.type === "date" || field.type === "startDate") && isIsoDate(value)) return formatDate(value, field.precision);
   if (field.type === "currency" && typeof value === "number") return `£${value.toLocaleString("en-GB")}`;
   if (typeof value === "number") return `${value.toLocaleString("en-GB")}${field.suffix ? ` ${field.suffix}` : ""}`;
   if (typeof value === "boolean") return value ? "Yes" : "No";
@@ -46,7 +46,7 @@ function formatAnswer(field: FieldDef, value: JsonValue | undefined, content: Co
 }
 
 const targetFor = (field: FieldDef) =>
-  field.type === "date" ? `${field.id}-input` : field.type === "address" ? `${field.id}-postcode` : field.id;
+  field.type === "date" ? `${field.id}-input` : field.type === "address" ? `${field.id}-postcode` : field.type === "startDate" ? `${field.id}-choice` : field.id;
 
 /** Answers grouped by step, for the review page. Only visible questions on active steps. */
 export function answersSummary(journey: Journey, ctx: EvalContext, content: ContentAdapter): SummarySection[] {

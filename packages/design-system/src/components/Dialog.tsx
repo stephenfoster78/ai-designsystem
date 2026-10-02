@@ -70,9 +70,9 @@ export function Dialog({ open, title, children, onClose, describedBy, initialFoc
         event.preventDefault();
         onClose();
       }}
-      className={cx("m-auto w-[calc(100%-2rem)] border-0 bg-surface p-0 text-ink", sizes[size])}
+      className={cx("m-auto w-[calc(100%-1rem)] border-0 bg-surface p-0 text-ink", sizes[size])}
     >
-      <div className="relative max-h-[85vh] overflow-y-auto p-6 sm:p-8">
+      <div className="relative max-h-[90vh] overflow-y-auto p-4 sm:p-8">
         <h2 id={titleId} ref={headingRef} tabIndex={-1} className="mb-4 pr-12 text-heading-l font-bold focus:outline-none">
           {title}
         </h2>

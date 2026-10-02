@@ -42,7 +42,10 @@ function EnsureOpenOnInput({ inputId }: { inputId: string }) {
       clearTimeout(timer);
       timer = setTimeout(() => {
         const current = latest.current;
-        if (current && !current.isOpen && document.activeElement === input && (input as HTMLInputElement).value.trim()) current.open(null, "input");
+        const text = (input as HTMLInputElement).value.trim();
+        // Do not reopen if an option was chosen meanwhile (its text is now the input's value).
+        const justChosen = current?.selectedItem?.textValue === (input as HTMLInputElement).value;
+        if (current && !current.isOpen && !justChosen && document.activeElement === input && text) current.open(null, "input");
       }, 50);
     };
     input.addEventListener("input", onInput);

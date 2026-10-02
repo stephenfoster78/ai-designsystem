@@ -160,6 +160,9 @@ importers:
 
   packages/design-system:
     dependencies:
+      '@qf/journey-engine':
+        specifier: workspace:*
+        version: link:../journey-engine
       '@qf/tokens':
         specifier: workspace:*
         version: link:../tokens

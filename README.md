@@ -106,6 +106,7 @@ Besides text, number, radio, checkbox and date (day or month precision) fields, 
 
 - **typeahead**: long reference lists (occupations, offence codes). The typed text is matched to an option on the server, so it works without JavaScript.
 - **vehicle / address**: lookups with manual fallback. "Find car" and "Find address" are submit buttons handled by the server, so they work without JavaScript. The server re-resolves every vehicle and address before saving: the browser never decides what car or address an answer refers to.
+- **startDate**: Today / Tomorrow (labelled with their dates) or Another date, with a forgiving DD/MM/YYYY input and an optional calendar in a modal dialog. The server resolves the choice to an ISO date in UK time. Spec: [`docs/components/start-date-input.txt`](docs/components/start-date-input.txt).
 - **repeater**: a list of items (drivers, claims, convictions), each completed through its own modal journey of one or more item steps. Items are validated step by step on the server and saved to the draft when complete. Other fields can take their options from a repeater, e.g. "Who did this happen to?" lists you and the drivers you added.
 
 ### Route guard
@@ -146,6 +147,10 @@ The target is WCAG 2.2 AA as a minimum. It is built in as follows:
 3. Quote and payment: tiered quote with live re-pricing, add-ons, basket with answers summary, auto-renewal, direct debit, and fake Worldpay with all four outcomes
 4. Signed-in path: handoff token, prepopulated details, Clubcard pricing, account sync prompt, household-cars lookup
 5. Second entry point: aggregator variant
+
+### Analytics
+
+Components emit vendor-neutral events (`fieldFocus`, `valueSelected` with `inputMethod`, `calendarOpened`, `calendarClosed`, `validationError` with an error code) through `AnalyticsProvider`. The app pushes them to `window.dataLayer` only when analytics cookies are accepted, so a tag manager can map them to Adobe Analytics. No personal data or message text is sent.
 
 ### Known limitations
 

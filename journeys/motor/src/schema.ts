@@ -103,7 +103,8 @@ export const motorJourneyDef: JourneyDef = {
         },
         {
           id: "cover",
-          fields: [{ id: "coverStart", type: "date", required: true, validate: [{ rule: "notPast" }, { rule: "maxDaysAhead", value: 30 }] }],
+          // Start date input component: Today / Tomorrow / Another date (+ calendar modal).
+          fields: [{ id: "coverStart", type: "startDate", required: true, validate: [{ rule: "notPast" }, { rule: "maxDaysAhead", value: 30 }] }],
         },
       ],
     },

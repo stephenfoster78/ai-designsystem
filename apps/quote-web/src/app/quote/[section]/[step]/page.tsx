@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { BackLink, SectionProgress } from "@qf/design-system";
 import { checkAccess, holds, navigation, sectionProgress } from "@qf/journey-engine";
 import { motorJourney } from "@qf/journey-motor";
+import { JourneyAnalytics } from "@/components/JourneyAnalytics";
 import { SessionTimeoutHost } from "@/components/SessionTimeoutHost";
 import { StepForm } from "@/components/StepForm";
 import { config } from "@/lib/config";
@@ -41,7 +42,7 @@ export default async function StepPage({ params }: { params: Params }) {
   if (!access.ok) redirect(access.redirectTo ? paths.step(access.redirectTo) : paths.check);
 
   const session = await touchQuoteSession(quote.session);
-  const view = buildStepView(step, services.content, quote.draft.answers);
+  const view = buildStepView(step, services.content, quote.draft.answers, ctx.today);
   const { previous } = navigation(motorJourney, step.id, ctx);
   const progress = sectionProgress(motorJourney, ctx, step.id).map((p) => ({
     id: p.section.id,
@@ -67,6 +68,7 @@ export default async function StepPage({ params }: { params: Params }) {
       <BackLink href={previous ? paths.step(previous) : paths.start} renderLink={(props) => <Link {...props} />} />
       <SectionProgress items={progress} renderLink={(props) => <Link {...props} />} />
       <div className="max-w-[40rem]">
+        <JourneyAnalytics journey={motorJourney.id} step={step.id}>
         <StepForm
           step={stepForClient}
           view={view}
@@ -76,6 +78,7 @@ export default async function StepPage({ params }: { params: Params }) {
           serverVisible={serverVisible}
           autoLookup={prefillReg && !quote.draft.answers.registration ? "registration" : undefined}
         />
+        </JourneyAnalytics>
       </div>
       <SessionTimeoutHost remainingMs={remainingMs(session)} warningMs={config.sessionWarningMs} />
     </>

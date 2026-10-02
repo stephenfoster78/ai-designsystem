@@ -16,6 +16,8 @@ export interface FieldView {
   inputMode?: FieldDef["inputMode"];
   precision?: FieldDef["precision"];
   repeater?: RepeaterView;
+  /** Start date fields: the server's today and the window length. */
+  startDate?: { today: string; maxDaysAhead: number; calendarTitle?: string };
 }
 
 export interface GroupView {
@@ -51,13 +53,15 @@ export interface StepView {
 
 export interface ErrorView {
   fieldId: string;
+  /** Error code, for analytics (message text changes; codes do not). */
+  code: string;
   /** Element the error summary link focuses. */
   targetId: string;
   message: string;
   /** Date parts to highlight. */
   parts?: Array<"day" | "month" | "year">;
   /** For composite fields: which input the error belongs to. */
-  subTarget?: "postcode" | "address" | "line1" | "town";
+  subTarget?: "postcode" | "address" | "line1" | "town" | "choice" | "date";
   /** For repeater item errors: which item (1-based). */
   item?: number;
 }
@@ -79,9 +83,9 @@ export function optionViews(field: FieldDef, content: ContentAdapter, answers: A
   });
 }
 
-function groupViews(groups: GroupDef[], content: ContentAdapter, answers: Answers, fields: Record<string, FieldView>): GroupView[] {
+function groupViews(groups: GroupDef[], content: ContentAdapter, answers: Answers, fields: Record<string, FieldView>, today: string): GroupView[] {
   return groups.map((group) => {
-    for (const field of group.fields) fields[field.id] = fieldView(field, content, answers);
+    for (const field of group.fields) fields[field.id] = fieldView(field, content, answers, today);
     return {
       id: group.id,
       legend: group.legendKey ? content.t(group.legendKey) : undefined,
@@ -109,7 +113,7 @@ export function itemLabel(field: FieldDef, item: Answers, content: ContentAdapte
     : parts.filter(Boolean).join(" ");
 }
 
-function fieldView(field: FieldDef, content: ContentAdapter, answers: Answers): FieldView {
+function fieldView(field: FieldDef, content: ContentAdapter, answers: Answers, today: string): FieldView {
   const view: FieldView = {
     id: field.id,
     type: field.type,
@@ -123,12 +127,16 @@ function fieldView(field: FieldDef, content: ContentAdapter, answers: Answers): 
     inputMode: field.inputMode,
     precision: field.precision,
   };
+  if (field.type === "startDate") {
+    const window = field.validate?.find((r) => r.rule === "maxDaysAhead");
+    view.startDate = { today, maxDaysAhead: window?.rule === "maxDaysAhead" ? window.value : 30, calendarTitle: content.maybe(`${field.id}.calendarTitle`) };
+  }
   if (field.repeater) {
     const fields: Record<string, FieldView> = {};
     const steps = field.repeater.steps.map((s) => ({
       id: s.id,
       title: content.t(s.titleKey ?? `${field.id}.step.${s.id}.title`),
-      groups: groupViews(s.groups, content, answers, fields),
+      groups: groupViews(s.groups, content, answers, fields, today),
     }));
     const saved = Array.isArray(answers[field.id]) ? (answers[field.id] as Answers[]) : [];
     view.repeater = {
@@ -150,9 +158,9 @@ function fieldView(field: FieldDef, content: ContentAdapter, answers: Answers): 
 }
 
 /** Builds the client view of a step. Answers are needed for options built from other answers. */
-export function buildStepView(step: StepDef, content: ContentAdapter, answers: Answers): StepView {
+export function buildStepView(step: StepDef, content: ContentAdapter, answers: Answers, today: string): StepView {
   const fields: Record<string, FieldView> = {};
-  const groups = groupViews(step.groups, content, answers, fields);
+  const groups = groupViews(step.groups, content, answers, fields, today);
   return { id: step.id, title: content.t(stepTitleKey(step)), sectionTitle: content.t(sectionTitleKey(step.section)), groups, fields };
 }
 
@@ -173,6 +181,10 @@ const ADDRESS_TARGETS: Record<string, ErrorView["subTarget"]> = {
 export function errorView(field: FieldDef, error: FieldError, content: ContentAdapter, options: { addressListShown?: boolean } = {}): ErrorView {
   const label = content.t(labelKey(field));
   const params: Record<string, string | number> = { label, ...error.params };
+  // Dates in parameters (e.g. the latest allowed start date) are shown in words.
+  for (const [key, param] of Object.entries(params)) {
+    if (typeof param === "string" && /^\d{4}-\d{2}-\d{2}$/.test(param)) params[key] = formatDate(param);
+  }
   let parts: ErrorView["parts"];
   if (error.code === "incompleteDate") {
     const missing = String(error.params?.missing ?? "").split(",").filter(Boolean) as Array<"day" | "month" | "year">;
@@ -183,12 +195,17 @@ export function errorView(field: FieldDef, error: FieldError, content: ContentAd
   let targetId = field.id;
   let subTarget: ErrorView["subTarget"];
   if (field.type === "date") targetId = `${field.id}-input`;
+  if (field.type === "startDate") {
+    // "required" means no option was chosen; every other error is about the typed date.
+    subTarget = error.code === "required" ? "choice" : "date";
+    targetId = subTarget === "choice" ? `${field.id}-choice` : field.id;
+  }
   if (field.type === "address") {
     subTarget = ADDRESS_TARGETS[error.code] ?? "postcode";
     if (subTarget === "address" && !options.addressListShown) subTarget = "postcode";
     targetId = `${field.id}-${subTarget}`;
   }
-  return { fieldId: field.id, targetId, message, parts, subTarget, item: typeof error.params?.item === "number" ? error.params.item : undefined };
+  return { fieldId: field.id, code: error.code, targetId, message, parts, subTarget, item: typeof error.params?.item === "number" ? error.params.item : undefined };
 }
 
 /** Initial value for a field: saved answer, else entry prefill (e.g. ?reg= from the direct site). */
