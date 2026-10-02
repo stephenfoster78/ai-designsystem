@@ -1,0 +1,23 @@
+{
+  "name": "@qf/design-system",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Accessible React components styled with @qf/tokens via Tailwind v4.",
+  "sideEffects": ["*.css"],
+  "exports": {
+    ".": "./src/index.ts",
+    "./consent": "./src/consent.ts",
+    "./styles.css": "./src/styles.css"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "dependencies": {
+    "@qf/tokens": "workspace:*"
+  }
+}

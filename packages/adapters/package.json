@@ -1,0 +1,17 @@
+{
+  "name": "@qf/adapters",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Adapter interfaces (content, drafts, sessions, vehicle) with demo implementations. Server-only.",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@qf/journey-engine": "workspace:*"
+  }
+}

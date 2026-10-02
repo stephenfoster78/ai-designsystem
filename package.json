@@ -1,0 +1,43 @@
+{
+  "name": "quote-framework",
+  "private": true,
+  "type": "module",
+  "description": "Reusable insurance quote journey framework: journey engine, design system, tokens and the motor quote journey.",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "tokens": "pnpm --filter @qf/tokens build",
+    "dev": "pnpm tokens && pnpm --filter quote-web dev",
+    "build": "pnpm tokens && pnpm --filter quote-web build",
+    "start": "pnpm --filter quote-web start",
+    "typecheck": "pnpm tokens && pnpm -r --parallel typecheck",
+    "lint": "eslint .",
+    "test": "pnpm tokens && vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "pnpm --filter quote-web test:e2e",
+    "check": "pnpm typecheck && pnpm lint && pnpm test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^22.19.0",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@vitejs/plugin-react": "^5.1.0",
+    "axe-core": "^4.11.0",
+    "eslint": "^9.39.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "globals": "^16.5.0",
+    "jsdom": "^27.1.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.3",
+    "vitest": "^4.0.6"
+  }
+}

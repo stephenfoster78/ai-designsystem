@@ -1,0 +1,42 @@
+{
+  "$description": "Primitive palette. Never referenced by components directly: components use semantic tokens so a brand or theme can be swapped by re-pointing semantics.",
+  "palette": {
+    "$type": "color",
+    "blue": {
+      "50": { "$value": "#eef4fb" },
+      "100": { "$value": "#d6e4f5" },
+      "600": { "$value": "#2a64b3" },
+      "700": { "$value": "#1d4f91" },
+      "800": { "$value": "#163d70" },
+      "900": { "$value": "#0f2a4d" }
+    },
+    "grey": {
+      "0": { "$value": "#ffffff" },
+      "50": { "$value": "#f6f7f8" },
+      "100": { "$value": "#eceef0" },
+      "200": { "$value": "#d9dde1" },
+      "400": { "$value": "#9aa3ad" },
+      "600": { "$value": "#5b6570" },
+      "700": { "$value": "#444c55" },
+      "900": { "$value": "#1b1f24" }
+    },
+    "red": {
+      "50": { "$value": "#fdf0ef" },
+      "700": { "$value": "#b3261e" }
+    },
+    "green": {
+      "50": { "$value": "#eef7f0" },
+      "700": { "$value": "#1e6b34" }
+    },
+    "amber": {
+      "50": { "$value": "#fff7e6" },
+      "700": { "$value": "#8a5300" }
+    },
+    "yellow": {
+      "400": { "$value": "#ffdd00" }
+    },
+    "purple": {
+      "700": { "$value": "#5b2d87" }
+    }
+  }
+}
