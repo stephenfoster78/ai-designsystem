@@ -1,10 +1,11 @@
 import { holds } from "./conditions";
 import type { StepInput } from "./input";
 import type { Journey } from "./journey";
-import { validateFields } from "./validation";
-import type { Answers, EvalContext, FieldDef, FieldErrors, SectionDef, StepDef } from "./types";
+import { itemContext, validateFields, validateItem, visibleInGroups, type ValidationContext } from "./validation";
+import { ITEM_ID, type Answers, type EvalContext, type FieldDef, type FieldErrors, type JsonValue, type RepeaterItemStep, type SectionDef, type StepDef } from "./types";
 
 const withAnswers = (ctx: EvalContext, answers: Answers): EvalContext => ({ ...ctx, answers });
+const vctx = (journey: Journey, ctx: EvalContext): ValidationContext => ({ ...ctx, predicates: journey.predicates });
 
 export function isStepActive(journey: Journey, step: StepDef, ctx: EvalContext): boolean {
   if (step.variants?.[ctx.entry.source]?.mode === "skip") return false;
@@ -23,7 +24,7 @@ export function visibleFields(journey: Journey, step: StepDef, ctx: EvalContext)
 }
 
 export function isStepComplete(journey: Journey, step: StepDef, ctx: EvalContext): boolean {
-  const errors = validateFields(visibleFields(journey, step, ctx), ctx.answers, ctx);
+  const errors = validateFields(visibleFields(journey, step, ctx), ctx.answers, vctx(journey, ctx));
   return Object.keys(errors).length === 0;
 }
 
@@ -65,11 +66,18 @@ export function sanitiseAnswers(journey: Journey, answers: Answers, ctx: EvalCon
   let current = { ...answers };
   for (let pass = 0; pass < 10; pass++) {
     const passCtx = withAnswers(ctx, current);
-    const visible = new Set(
-      activeSteps(journey, passCtx).flatMap((step) => visibleFields(journey, step, passCtx).map((f) => f.id)),
+    const visible = new Map(
+      activeSteps(journey, passCtx).flatMap((step) => visibleFields(journey, step, passCtx).map((f) => [f.id, f] as const)),
     );
-    const next = Object.fromEntries(Object.entries(current).filter(([id]) => visible.has(id)));
-    if (Object.keys(next).length === Object.keys(current).length) return next;
+    const next: Answers = {};
+    for (const [id, value] of Object.entries(current)) {
+      const field = visible.get(id);
+      if (!field) continue;
+      next[id] = field.type === "repeater" && Array.isArray(value)
+        ? value.map((item) => sanitiseItem(journey, field, item as Answers, passCtx) as JsonValue)
+        : value;
+    }
+    if (JSON.stringify(next) === JSON.stringify(current)) return next;
     current = next;
   }
   throw new Error("sanitiseAnswers did not converge: check for circular showWhen conditions");
@@ -87,7 +95,7 @@ export type CommitResult =
 export function commitStep(journey: Journey, step: StepDef, input: StepInput, ctx: EvalContext): CommitResult {
   const merged = { ...ctx.answers, ...input.values };
   const mergedCtx = withAnswers(ctx, merged);
-  const errors = validateFields(visibleFields(journey, step, mergedCtx), merged, mergedCtx, input.parseErrors);
+  const errors = validateFields(visibleFields(journey, step, mergedCtx), merged, vctx(journey, mergedCtx), input.parseErrors);
   if (Object.keys(errors).length > 0) return { ok: false, errors, answers: ctx.answers };
   return { ok: true, answers: sanitiseAnswers(journey, merged, mergedCtx) };
 }
@@ -100,7 +108,7 @@ export function commitStep(journey: Journey, step: StepDef, input: StepInput, ct
 export function commitValid(journey: Journey, step: StepDef, input: StepInput, ctx: EvalContext): Answers {
   const merged = { ...ctx.answers, ...input.values };
   const mergedCtx = withAnswers(ctx, merged);
-  const errors = validateFields(visibleFields(journey, step, mergedCtx), merged, mergedCtx, input.parseErrors);
+  const errors = validateFields(visibleFields(journey, step, mergedCtx), merged, vctx(journey, mergedCtx), input.parseErrors);
   const kept = { ...merged };
   for (const id of Object.keys(errors)) {
     if (id in ctx.answers) kept[id] = ctx.answers[id] as Answers[string];
@@ -131,4 +139,69 @@ export function sectionProgress(journey: Journey, ctx: EvalContext, currentStepI
     else status = "upcoming";
     return [{ section, status, firstStep }];
   });
+}
+
+// ---------------------------------------------------------------------------
+// Repeater items (modal journeys). Items are edited one item step at a time and
+// saved to the draft when complete, independently of the parent step's form.
+// ---------------------------------------------------------------------------
+
+export function repeaterField(journey: Journey, fieldId: string): FieldDef {
+  const field = journey.fieldById.get(fieldId)?.field;
+  if (!field?.repeater) throw new Error(`Field "${fieldId}" is not a repeater`);
+  return field;
+}
+
+/** Item steps that have at least one visible field for this item. */
+export function activeItemSteps(journey: Journey, field: FieldDef, item: Answers, ctx: EvalContext): RepeaterItemStep[] {
+  const itemCtx = itemContext(vctx(journey, ctx), item);
+  return (field.repeater?.steps ?? []).filter((s) => visibleInGroups(s.groups, itemCtx).length > 0);
+}
+
+export function visibleItemFields(journey: Journey, itemStep: RepeaterItemStep, item: Answers, ctx: EvalContext): FieldDef[] {
+  return visibleInGroups(itemStep.groups, itemContext(vctx(journey, ctx), item));
+}
+
+/** Validates one item step after merging its input into the item being edited. */
+export function commitItemStep(journey: Journey, itemStep: RepeaterItemStep, input: StepInput, item: Answers, ctx: EvalContext): { ok: true; item: Answers } | { ok: false; errors: FieldErrors } {
+  const merged = { ...item, ...input.values };
+  const itemCtx = itemContext(vctx(journey, ctx), merged);
+  const errors = validateFields(visibleInGroups(itemStep.groups, itemCtx), merged, itemCtx, input.parseErrors);
+  return Object.keys(errors).length ? { ok: false, errors } : { ok: true, item: merged };
+}
+
+/** Keeps only the item's visible answers (and its id). */
+export function sanitiseItem(journey: Journey, field: FieldDef, item: Answers, ctx: EvalContext): Answers {
+  const itemCtx = itemContext(vctx(journey, ctx), item);
+  const visible = new Set((field.repeater?.steps ?? []).flatMap((s) => visibleInGroups(s.groups, itemCtx).map((f) => f.id)));
+  return Object.fromEntries(Object.entries(item).filter(([k]) => k === ITEM_ID || visible.has(k)));
+}
+
+export type ItemSaveResult = { ok: true; answers: Answers } | { ok: false; errors: FieldErrors };
+
+/**
+ * Adds or replaces an item (matched on its id) after validating every item step. Returns the
+ * journey answers with the repeater updated; the caller stores them.
+ */
+export function upsertItem(journey: Journey, fieldId: string, item: Answers, ctx: EvalContext): ItemSaveResult {
+  const field = repeaterField(journey, fieldId);
+  if (typeof item[ITEM_ID] !== "string") throw new Error("Repeater items need an id");
+  const errors = validateItem(field, item, vctx(journey, ctx));
+  if (Object.keys(errors).length) return { ok: false, errors };
+  const existing = Array.isArray(ctx.answers[fieldId]) ? (ctx.answers[fieldId] as Answers[]) : [];
+  const index = existing.findIndex((i) => i[ITEM_ID] === item[ITEM_ID]);
+  if (index === -1 && existing.length >= (field.repeater?.maxItems ?? Infinity)) {
+    return { ok: false, errors: { [fieldId]: { code: "maxItems", params: { max: field.repeater!.maxItems } } } };
+  }
+  const clean = sanitiseItem(journey, field, item, ctx);
+  const items = index === -1 ? [...existing, clean] : existing.map((i, n) => (n === index ? clean : i));
+  // Not sanitised here: the parent step (e.g. "add drivers? yes") may not be submitted yet.
+  // The parent step's commit sanitises everything.
+  return { ok: true, answers: { ...ctx.answers, [fieldId]: items as JsonValue } };
+}
+
+export function removeItem(journey: Journey, fieldId: string, itemId: string, ctx: EvalContext): Answers {
+  repeaterField(journey, fieldId);
+  const existing = Array.isArray(ctx.answers[fieldId]) ? (ctx.answers[fieldId] as Answers[]) : [];
+  return { ...ctx.answers, [fieldId]: existing.filter((i) => i[ITEM_ID] !== itemId) as JsonValue };
 }

@@ -65,17 +65,29 @@ export type FieldType =
   | "select"
   | "checkbox"
   | "checkboxes"
-  | "date";
+  | "date"
+  /** Free text matched against a long option list (occupations, offence codes). */
+  | "typeahead"
+  /** Registration lookup with manual fallback. Value: Vehicle-shaped object. */
+  | "vehicle"
+  /** Postcode lookup with manual fallback. Value: Address-shaped object. */
+  | "address"
+  /** A list of items, each answered through its own item steps (a modal journey). */
+  | "repeater";
 
 export interface OptionDef {
   value: string;
   /** Defaults to `${fieldId}.option.${value}`. */
   labelKey?: string;
+  /** Literal label, for reference data (occupations, codes) that is not content-managed. */
+  label?: string;
   hintKey?: string;
 }
 
 export type ValidationRule =
   | { rule: "pattern"; value: string; code?: string }
+  /** Fails when the value matches, e.g. excluded postcode areas. */
+  | { rule: "notPattern"; value: string; code: string }
   | { rule: "minLength"; value: number }
   | { rule: "maxLength"; value: number }
   | { rule: "min"; value: number }
@@ -86,8 +98,38 @@ export type ValidationRule =
   | { rule: "notPast" }
   /** Date must be no more than `value` days after today. */
   | { rule: "maxDaysAhead"; value: number }
+  /** Date must be no more than `value` years before today (e.g. claims in the last 5 years). */
+  | { rule: "withinYears"; value: number }
   /** Date must be at least `value` years before today (minimum age). */
-  | { rule: "minYearsAgo"; value: number };
+  | { rule: "minYearsAgo"; value: number }
+  /** Date of birth: the person must be `value` or younger today. */
+  | { rule: "maxAge"; value: number }
+  /** Date must be on or after another answered date plus `years` (e.g. licence after 17th birthday). */
+  | { rule: "notBeforeAnniversary"; field: string; years: number; code: string };
+
+export interface RepeaterItemStep {
+  id: string;
+  /** Defaults to `${repeaterId}.step.${id}.title`. */
+  titleKey?: string;
+  groups: GroupDef[];
+}
+
+export interface RepeaterDef {
+  maxItems: number;
+  steps: RepeaterItemStep[];
+  /** Item fields joined to label an item in the summary list, e.g. first and last name. */
+  summaryFields: string[];
+}
+
+/** Options built from another repeater's items, e.g. "Who was driving?" → you or an added driver. */
+export interface OptionsFrom {
+  repeater: string;
+  labelFields: string[];
+  prepend?: OptionDef[];
+}
+
+/** Every repeater item carries a stable id so other answers can refer to it. */
+export const ITEM_ID = "_id";
 
 export interface FieldDef {
   id: string;
@@ -97,6 +139,7 @@ export interface FieldDef {
   labelKey?: string;
   hintKey?: string;
   options?: OptionDef[];
+  optionsFrom?: OptionsFrom;
   showWhen?: Expr;
   validate?: ValidationRule[];
   /** Normalisation applied before validation and storage. */
@@ -109,6 +152,9 @@ export interface FieldDef {
   /** Fixed visual prefix, e.g. "£" or "UK". Not part of the value. */
   prefix?: string;
   suffix?: string;
+  /** Dates: "month" collects month and year only (stored as the 1st of the month). */
+  precision?: "day" | "month";
+  repeater?: RepeaterDef;
 }
 
 export interface GroupDef {
@@ -165,4 +211,27 @@ export interface FieldError {
 export type FieldErrors = Record<string, FieldError>;
 
 /** Raw submitted values, kept so invalid input can be redisplayed exactly as typed. */
-export type RawInput = Record<string, string | string[] | { day: string; month: string; year: string }>;
+export type RawInput = Record<string, string | string[] | Record<string, string>>;
+
+/** Shape of a resolved vehicle answer. */
+export interface VehicleValue {
+  reg: string;
+  make?: string;
+  model?: string;
+  year?: number;
+  transmission?: string;
+  variant?: string;
+  fuel?: string;
+  source?: "lookup" | "manual";
+}
+
+/** Shape of a resolved address answer. */
+export interface AddressValue {
+  postcode: string;
+  line1?: string;
+  line2?: string;
+  town?: string;
+  /** Lookup result id chosen from the list, before resolution. */
+  addressId?: string;
+  source?: "lookup" | "manual";
+}

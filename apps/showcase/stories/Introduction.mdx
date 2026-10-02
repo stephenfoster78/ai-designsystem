@@ -1,0 +1,21 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="Introduction" />
+
+# Quote framework design system
+
+Accessible React components for insurance quote journeys, styled only through design tokens.
+
+- **Tokens**: `packages/tokens/tokens/*.tokens.json` (DTCG) are the single source of truth. They build to CSS variables and a Tailwind v4 theme, and Tokens Studio for Figma can sync the same files.
+- **Accessibility**: WCAG 2.2 AA is the floor. Every story is checked by the Accessibility panel (axe), and colour pairings are contrast-tested in CI. Automated checks catch around a third of issues, so test with a keyboard and a screen reader too.
+- **Progressive enhancement**: form components post plain HTML form data, so journeys work before (and without) JavaScript.
+
+Components with specs in the project:
+
+| Component | Notes |
+| --- | --- |
+| Reg lookup | UK prefix, Find car, results card, "Not correct vehicle" reset, manual lookup modal with dependent dropdowns |
+| Address lookup | Postcode search, address list, manual entry, Crown Dependency exclusion |
+| Typeahead | React Aria ComboBox; works with typing, paste and voice input; renders inside modals |
+| Add another list | Summary of repeater items with named change and remove actions |
+| Session timeout | Warning 2 minutes before expiry; screen reader announcements at 2 min, 1 min, 50, 30 and 10 s |

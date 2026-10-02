@@ -29,6 +29,8 @@ jobs:
         run: pnpm test
       - name: Build
         run: pnpm build
+      - name: Build Storybook
+        run: pnpm build-storybook
       - name: Install Playwright Chromium
         run: pnpm --filter quote-web exec playwright install --with-deps chromium
       - name: End-to-end and axe accessibility tests

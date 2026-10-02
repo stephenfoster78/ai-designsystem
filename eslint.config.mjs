@@ -12,6 +12,7 @@ export default tseslint.config(
       "**/dist/**",
       "**/playwright-report/**",
       "**/test-results/**",
+      "**/storybook-static/**",
       "**/next-env.d.ts",
     ],
   },

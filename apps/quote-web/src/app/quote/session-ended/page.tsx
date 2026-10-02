@@ -28,14 +28,21 @@ export default async function SessionEndedPage() {
           <p className="mb-6 text-heading-l font-bold" data-testid="quote-reference">
             {reference}
           </p>
-          <p className="mb-8">To continue your quote, you’ll need this reference and your date of birth or postcode.</p>
+          <p className="mb-8">To continue your quote, you’ll need this reference and your date of birth.</p>
         </>
       ) : (
         <p className="mb-8">You had not answered any questions, so there was nothing to save.</p>
       )}
-      <Link href={paths.start} className={buttonClasses("primary")}>
-        Start a new quote
-      </Link>
+      <div className="flex flex-wrap items-center gap-6">
+        {reference && (
+          <Link href="/quote/resume" className={buttonClasses("primary")}>
+            Continue your quote
+          </Link>
+        )}
+        <Link href={paths.start} className={buttonClasses(reference ? "secondary" : "primary")}>
+          Start a new quote
+        </Link>
+      </div>
     </div>
   );
 }

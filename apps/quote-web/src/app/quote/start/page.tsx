@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { InsetText } from "@qf/design-system";
 import { DialogLink } from "@/components/SiteDialogs";
 import { cleanRegParam } from "@/lib/entry";
-import { startQuote } from "../actions";
+import { StartForm } from "./StartForm";
 
 export const metadata: Metadata = { title: "Get a car insurance quote" };
 
@@ -29,26 +30,18 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
         </InsetText>
       )}
 
-      <p className="mb-8">
+      <p className="mb-4">
         We use your information to give you a quote and to prevent fraud.{" "}
         <DialogLink dialog="privacy" href="/privacy">
           Find out how we use your information
         </DialogLink>
         .
       </p>
+      <p className="mb-4">
+        Already started a quote? <Link href="/quote/resume">Continue a saved quote</Link>.
+      </p>
 
-      <form action={startQuote}>
-        {reg && <input type="hidden" name="reg" value={reg} />}
-        <button
-          type="submit"
-          className="inline-flex min-h-[var(--qf-size-target-min)] items-center gap-3 rounded-small border-2 border-brand bg-brand px-6 py-3 text-heading-s font-bold text-ink-inverse hover:border-brand-hover hover:bg-brand-hover focus-visible:focus-ring"
-        >
-          Start now
-          <svg aria-hidden="true" focusable="false" width="17" height="19" viewBox="0 0 33 40" fill="currentColor">
-            <path d="M0 0h13l20 20-20 20H0l20-20z" />
-          </svg>
-        </button>
-      </form>
+      <StartForm reg={reg} />
     </div>
   );
 }

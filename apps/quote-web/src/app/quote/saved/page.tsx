@@ -27,7 +27,7 @@ export default async function SavedPage() {
           {quote.draft.reference}
         </strong>
       </Panel>
-      <p className="mb-4">Make a note of your reference. You’ll need it, and your date of birth or postcode, to continue your quote later.</p>
+      <p className="mb-4">Make a note of your reference. You’ll need it, and your date of birth, to continue your quote later.</p>
       <p className="mb-8">For your security, we’ll end this session after {idleLimitText()} without activity. Your answers stay saved.</p>
       <Link href={next ? paths.step(next) : paths.check} className={buttonClasses("primary")}>
         Continue your quote

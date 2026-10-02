@@ -1,0 +1,26 @@
+{
+  "name": "showcase",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Storybook showcase for the design system: components, states and accessibility checks.",
+  "scripts": {
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build -o storybook-static"
+  },
+  "dependencies": {
+    "@qf/design-system": "workspace:*",
+    "@qf/tokens": "workspace:*",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@storybook/addon-a11y": "^10.6.1",
+    "@storybook/addon-docs": "^10.6.1",
+    "@storybook/react-vite": "^10.6.1",
+    "@tailwindcss/vite": "^4.1.16",
+    "storybook": "^10.6.1",
+    "tailwindcss": "^4.1.16",
+    "vite": "^7.1.0"
+  }
+}
