@@ -13,12 +13,16 @@ Prerequisites: [Node.js 22 LTS](https://nodejs.org/) and Git.
 ```powershell
 git clone https://github.com/stephenfoster78/ai-designsystem.git H:\Projects\Framework
 cd H:\Projects\Framework
-corepack enable          # once per machine; provides the pinned pnpm version
+npm install -g pnpm@10   # user-level install, no admin rights needed
 pnpm install
 pnpm dev                 # http://localhost:3000
 ```
 
-If `corepack enable` fails with a permissions error on a managed Windows machine, run `npm install -g pnpm@10` instead.
+On locked-down Windows machines:
+
+- `corepack enable` fails with `EPERM` because it writes to `C:\Program Files`. Use `npm install -g pnpm@10` as above.
+- "running scripts is disabled on this system" means PowerShell's execution policy is blocking `pnpm.ps1`. Use `pnpm.cmd` in place of `pnpm` (e.g. `pnpm.cmd dev`), or use Command Prompt, or allow scripts for the current window only with `Set-ExecutionPolicy -Scope Process RemoteSigned`.
+- If `npm install -g` is blocked too, prefix commands with `npx pnpm@10` (e.g. `npx pnpm@10 dev`).
 
 | Command | What it does |
 | --- | --- |
