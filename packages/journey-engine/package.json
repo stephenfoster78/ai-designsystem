@@ -1,0 +1,14 @@
+{
+  "name": "@qf/journey-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Framework-agnostic journey engine: schema types, conditions, step resolution, route guard, validation.",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}

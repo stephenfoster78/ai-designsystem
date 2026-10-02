@@ -1,0 +1,30 @@
+{
+  "name": "quote-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "next typegen && tsc -p tsconfig.json",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@qf/adapters": "workspace:*",
+    "@qf/design-system": "workspace:*",
+    "@qf/journey-engine": "workspace:*",
+    "@qf/journey-motor": "workspace:*",
+    "@qf/tokens": "workspace:*",
+    "next": "^16.0.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.11.0",
+    "@playwright/test": "^1.56.1",
+    "@tailwindcss/postcss": "^4.1.16",
+    "tailwindcss": "^4.1.16"
+  }
+}

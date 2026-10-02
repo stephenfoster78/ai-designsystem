@@ -1,0 +1,13 @@
+node_modules/
+.next/
+out/
+dist/
+coverage/
+*.tsbuildinfo
+.env*.local
+.DS_Store
+Thumbs.db
+playwright-report/
+test-results/
+next-env.d.ts
+storybook-static/

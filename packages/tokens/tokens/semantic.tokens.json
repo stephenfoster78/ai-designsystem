@@ -1,0 +1,90 @@
+{
+  "$description": "Semantic tokens. Names are chosen to read well as Tailwind utilities (text-ink, bg-surface-subtle, border-line-strong).",
+  "color": {
+    "$type": "color",
+    "brand": { "$value": "{palette.blue.700}", "$description": "Brand blue. Primary buttons, UK registration prefix." },
+    "brand-hover": { "$value": "{palette.blue.800}" },
+    "brand-subtle": { "$value": "{palette.blue.50}" },
+    "ink": { "$value": "{palette.grey.900}", "$description": "Default text." },
+    "ink-muted": { "$value": "{palette.grey.600}", "$description": "Hint and secondary text. Must still meet 4.5:1." },
+    "ink-inverse": { "$value": "{palette.grey.0}", "$description": "Text on brand or dark surfaces." },
+    "ink-error": { "$value": "{palette.red.700}" },
+    "ink-success": { "$value": "{palette.green.700}" },
+    "ink-warning": { "$value": "{palette.amber.700}" },
+    "link": { "$value": "{palette.blue.700}" },
+    "link-hover": { "$value": "{palette.blue.900}" },
+    "link-visited": { "$value": "{palette.purple.700}" },
+    "page": { "$value": "{palette.grey.0}", "$description": "Page background." },
+    "surface": { "$value": "{palette.grey.0}" },
+    "surface-subtle": { "$value": "{palette.grey.50}" },
+    "surface-muted": { "$value": "{palette.grey.100}" },
+    "surface-error": { "$value": "{palette.red.50}" },
+    "surface-success": { "$value": "{palette.green.50}" },
+    "surface-warning": { "$value": "{palette.amber.50}" },
+    "surface-info": { "$value": "{palette.blue.50}" },
+    "line": { "$value": "{palette.grey.200}", "$description": "Decorative divider. Not for meaningful boundaries." },
+    "line-strong": { "$value": "{palette.grey.600}", "$description": "Form control boundaries. Must meet 3:1 (WCAG 1.4.11)." },
+    "line-error": { "$value": "{palette.red.700}" },
+    "focus": { "$value": "{palette.yellow.400}", "$description": "Inner focus ring." },
+    "focus-ink": { "$value": "{palette.grey.900}", "$description": "Outer focus ring and text on focus colour." },
+    "overlay": { "$value": "#1b1f24b3", "$description": "Modal backdrop." }
+  },
+  "font": {
+    "family": {
+      "$type": "fontFamily",
+      "body": { "$value": ["Arial", "Helvetica Neue", "Helvetica", "sans-serif"] }
+    },
+    "weight": {
+      "$type": "fontWeight",
+      "regular": { "$value": 400 },
+      "bold": { "$value": 700 }
+    },
+    "size": {
+      "$type": "dimension",
+      "body-small": { "$value": "1rem" },
+      "body": { "$value": "1.125rem" },
+      "heading-s": { "$value": "1.25rem" },
+      "heading-m": { "$value": "1.5rem" },
+      "heading-l": { "$value": "2rem" },
+      "heading-xl": { "$value": "2.5rem" }
+    },
+    "line-height": {
+      "$type": "number",
+      "body-small": { "$value": 1.5 },
+      "body": { "$value": 1.55 },
+      "heading-s": { "$value": 1.4 },
+      "heading-m": { "$value": 1.3 },
+      "heading-l": { "$value": 1.2 },
+      "heading-xl": { "$value": 1.15 }
+    }
+  },
+  "space": {
+    "$type": "dimension",
+    "unit": { "$value": "0.25rem", "$description": "Base grid unit. Tailwind's spacing scale is a multiple of this (p-4 = 4 units = 16px)." },
+    "xs": { "$value": "0.25rem" },
+    "sm": { "$value": "0.5rem", "$description": "'spacing small' in component specs." },
+    "md": { "$value": "1rem" },
+    "lg": { "$value": "1.5rem" },
+    "xl": { "$value": "2rem" },
+    "2xl": { "$value": "3rem" },
+    "3xl": { "$value": "4rem" }
+  },
+  "radius": {
+    "$type": "dimension",
+    "none": { "$value": "0" },
+    "small": { "$value": "0.25rem" },
+    "medium": { "$value": "0.5rem" },
+    "full": { "$value": "9999px" }
+  },
+  "border-width": {
+    "$type": "dimension",
+    "thin": { "$value": "1px" },
+    "control": { "$value": "2px", "$description": "Form controls." },
+    "focus": { "$value": "3px" }
+  },
+  "size": {
+    "$type": "dimension",
+    "target-min": { "$value": "2.75rem", "$description": "44px minimum interactive target (exceeds WCAG 2.5.8 AA 24px)." },
+    "measure": { "$value": "40rem", "$description": "Maximum readable line length for body copy." }
+  }
+}

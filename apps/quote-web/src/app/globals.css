@@ -1,0 +1,7 @@
+@import "tailwindcss";
+@import "@qf/tokens/css";
+@import "@qf/tokens/tailwind";
+@import "@qf/design-system/styles.css";
+
+/* Tailwind scans the app by default; workspace packages must be listed. */
+@source "../../../../packages/design-system/src";

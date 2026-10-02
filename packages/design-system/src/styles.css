@@ -1,0 +1,87 @@
+/*
+ * Design system base styles and utilities. Import after Tailwind and the token CSS:
+ *   @import "tailwindcss";
+ *   @import "@qf/tokens/css";
+ *   @import "@qf/tokens/tailwind";
+ *   @import "@qf/design-system/styles.css";
+ */
+
+/* Two-tone focus indicator: a yellow inner ring that stands out on brand surfaces and a
+   dark outer outline that meets 3:1 on light ones. The outline survives forced-colours
+   mode, where box-shadow is removed. */
+@utility focus-ring {
+  outline: var(--qf-border-width-focus) solid var(--qf-color-focus-ink);
+  outline-offset: var(--qf-border-width-focus);
+  box-shadow: 0 0 0 var(--qf-border-width-focus) var(--qf-color-focus);
+}
+
+@utility visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+@layer base {
+  html {
+    font-family: var(--qf-font-family-body);
+    color: var(--qf-color-ink);
+    background: var(--qf-color-page);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    font-size: var(--qf-font-size-body);
+    line-height: var(--qf-font-line-height-body);
+  }
+
+  a {
+    color: var(--qf-color-link);
+    text-decoration: underline;
+    text-decoration-thickness: max(1px, 0.0625rem);
+    text-underline-offset: 0.15em;
+  }
+  a:visited {
+    color: var(--qf-color-link-visited);
+  }
+  a:hover {
+    color: var(--qf-color-link-hover);
+    text-decoration-thickness: max(3px, 0.1875rem);
+  }
+  a:focus-visible {
+    outline: var(--qf-border-width-focus) solid transparent; /* visible in forced-colours mode */
+    color: var(--qf-color-focus-ink);
+    background-color: var(--qf-color-focus);
+    box-shadow: 0 -2px var(--qf-color-focus), 0 4px var(--qf-color-focus-ink);
+    text-decoration: none;
+  }
+
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  dialog::backdrop {
+    background: var(--qf-color-overlay);
+  }
+}
+
+@layer components {
+  .qf-skip-link {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform: translateY(-120%);
+    padding: var(--qf-space-sm) var(--qf-space-md);
+    background: var(--qf-color-surface);
+  }
+  .qf-skip-link:focus {
+    position: static;
+    display: block;
+    transform: none;
+  }
+}

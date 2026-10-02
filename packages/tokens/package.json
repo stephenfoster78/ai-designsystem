@@ -1,0 +1,21 @@
+{
+  "name": "@qf/tokens",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Design tokens: single source of truth for CSS, Tailwind and Figma.",
+  "exports": {
+    "./css": "./dist/tokens.css",
+    "./tailwind": "./dist/tailwind.css",
+    "./json": "./dist/tokens.json",
+    "./flat": "./dist/tokens.flat.json",
+    "./contrast": "./src/contrast.ts"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "style-dictionary": "^5.1.1"
+  }
+}
