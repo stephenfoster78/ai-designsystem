@@ -2,7 +2,7 @@
 
 A reusable framework for insurance quote journeys, with a car insurance quote as the first journey. It comprises a journey engine, a design system driven by design tokens, demo adapters, and a Next.js app.
 
-**Status: milestone 1 (foundations).** The engine, tokens pipeline, demo adapters, session timeout and cookie consent are in place. They are proven by a three-step vertical slice of the motor journey: *Your car → Owning and using the car → Your details*.
+**Status: milestone 2 (direct guest journey).** The full direct-site guest path runs from Start to the answers summary: eligibility, car (with registration lookup), about you (address lookup, occupation typeahead, licence), additional drivers, household cars, claims and convictions, and no claims discount. It also includes save and resume by reference and a Storybook showcase.
 
 > Demonstration service. It does not provide real insurance quotes and all data is fake.
 
@@ -32,8 +32,21 @@ On locked-down Windows machines:
 | `pnpm test:e2e` | End-to-end and axe accessibility tests (Playwright). Run `pnpm build` first, and `pnpm --filter quote-web exec playwright install chromium` once |
 | `pnpm typecheck` / `pnpm lint` | TypeScript and ESLint (including `jsx-a11y` strict rules) |
 | `pnpm check` | Typecheck, lint and unit tests together |
+| `pnpm storybook` | Component showcase with accessibility checks, at http://localhost:6006 |
 
-Try `http://localhost:3000/quote/start?reg=AB12CDE` to see a registration passed through from the direct site.
+Try `http://localhost:3000/quote/start?reg=AB12CDE` to see a registration passed through from the direct site and looked up automatically.
+
+### Demo data
+
+| To see | Use |
+| --- | --- |
+| Car found | `AB12CDE`, `KM19XYZ`, `YR68HBX`, `LV21EVE`, `SN15DSL` |
+| Car not found | any other valid registration, e.g. `ZZ99ZZZ` |
+| Lookup service failure | `ERR0R` (zero, not O) |
+| Addresses | any valid UK postcode, e.g. `LS1 4AP` |
+| No addresses | `ZZ1 1ZZ` |
+| Outside the UK | a Jersey, Guernsey or Isle of Man postcode, e.g. `JE2 3AB` |
+| Resume | the reference from "Save and come back later", plus date of birth (or the registration if saved before date of birth) |
 
 ### Configuration
 
@@ -51,13 +64,14 @@ To try the timeout warning quickly, set `QF_SESSION_IDLE_SECONDS=150`. The warni
 
 ```
 apps/quote-web            Next.js 16 app (App Router, server actions, Tailwind v4)
+apps/showcase             Storybook 10 (stories live next to components in packages/design-system)
 packages/journey-engine   Framework-agnostic engine: schema types, conditions, step resolver,
                           route guard, validation, answer sanitising. Pure TypeScript.
 packages/design-system    Accessible React components, styled only through tokens
 packages/tokens           DTCG design tokens → CSS variables, Tailwind theme, JSON
 packages/adapters         Adapter interfaces + demo implementations (drafts, sessions,
-                          content, vehicle lookup)
-journeys/motor            Motor journey: schema, predicates, content (en-GB)
+                          content, vehicle and address lookup, attempt limiting)
+journeys/motor            Motor journey: schema, predicates, content (en-GB), reference data
 ```
 
 Workspace packages ship TypeScript source; Next.js compiles them (`transpilePackages`), so there is no package build step except tokens.
@@ -85,6 +99,14 @@ The same pure evaluator runs in two places: in the browser to reveal questions a
 4. autosaves the draft, issues the quote reference on the first save, and moves to the next active step
 
 `defineJourney` validates a schema when it loads: duplicate ids, unknown sections, unknown fields in conditions and unknown predicates all fail fast. A content test fails CI if any label, option or required-error copy is missing.
+
+### Field types
+
+Besides text, number, radio, checkbox and date (day or month precision) fields, the engine supports:
+
+- **typeahead**: long reference lists (occupations, offence codes). The typed text is matched to an option on the server, so it works without JavaScript.
+- **vehicle / address**: lookups with manual fallback. "Find car" and "Find address" are submit buttons handled by the server, so they work without JavaScript. The server re-resolves every vehicle and address before saving: the browser never decides what car or address an answer refers to.
+- **repeater**: a list of items (drivers, claims, convictions), each completed through its own modal journey of one or more item steps. Items are validated step by step on the server and saved to the draft when complete. Other fields can take their options from a repeater, e.g. "Who did this happen to?" lists you and the drivers you added.
 
 ### Route guard
 
@@ -120,9 +142,13 @@ The target is WCAG 2.2 AA as a minimum. It is built in as follows:
 ## Milestones
 
 1. **Foundations** ✅ monorepo, tokens pipeline, journey engine, demo adapters, timeout modal, cookie panel
-2. Direct journey, guest path: Start through Review. Includes reg lookup, typeahead and repeater components, and resume by reference with date of birth or postcode.
+2. **Direct journey, guest path** ✅ screens 1–11, reg lookup, address lookup, typeahead, repeaters as modal journeys, resume with attempt limiting, Storybook
 3. Quote and payment: tiered quote with live re-pricing, add-ons, basket with answers summary, auto-renewal, direct debit, and fake Worldpay with all four outcomes
 4. Signed-in path: handoff token, prepopulated details, Clubcard pricing, account sync prompt, household-cars lookup
 5. Second entry point: aggregator variant
 
-Storybook (the component showcase) is planned alongside milestone 2, once the reg lookup and typeahead components land.
+### Known limitations
+
+- Adding drivers, claims and convictions needs JavaScript (the modal journeys). Everything else works without it.
+- Sign in and register are shown on the sign-in step but are stubbed until milestone 4.
+- Demo stores are in memory, so drafts and resume lockouts reset when the server restarts.

@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  createDemoAddressApi,
   createDemoVehicleApi,
   createJsonContent,
   createMemoryDraftStore,
+  createMemoryRateLimiter,
   createMemorySessionStore,
+  DEMO_EMPTY_POSTCODE,
   DEMO_FAILURE_REG,
   DraftLockedError,
   generateReference,
@@ -75,8 +78,40 @@ describe("session store", () => {
   });
 });
 
+describe("demo address api", () => {
+  const api = createDemoAddressApi();
+  it("generates stable addresses for any valid postcode and finds them by id", async () => {
+    const list = await api.lookup("ls14ap");
+    expect(list.length).toBeGreaterThan(3);
+    expect(list[0]).toMatchObject({ town: "Leeds", postcode: "LS1 4AP" });
+    expect(await api.find("LS1 4AP", list[2]!.id)).toEqual(list[2]);
+    expect(await api.lookup("LS1 4AP")).toEqual(list);
+  });
+  it("returns nothing for the empty test postcode or invalid input", async () => {
+    expect(await api.lookup(DEMO_EMPTY_POSTCODE)).toEqual([]);
+    expect(await api.lookup("nonsense")).toEqual([]);
+  });
+});
+
+describe("rate limiter", () => {
+  it("locks after the maximum failures and unlocks after the lockout", async () => {
+    let t = 0;
+    const limiter = createMemoryRateLimiter({ maxAttempts: 3, lockoutMs: 1000, now: () => t });
+    for (let i = 0; i < 3; i++) await limiter.recordFailure("ref");
+    expect(await limiter.check("ref")).toEqual({ allowed: false, retryAfterMs: 1000 });
+    t = 1000;
+    expect(await limiter.check("ref")).toEqual({ allowed: true });
+    await limiter.recordFailure("ref");
+    expect(await limiter.check("ref")).toEqual({ allowed: true });
+  });
+});
+
 describe("demo vehicle api", () => {
   const api = createDemoVehicleApi();
+  it("validates manual selections against the tree", async () => {
+    expect(await api.isValidManual({ make: "Ford", model: "Fiesta", transmission: "Manual", year: 2015, variant: "1.1 Trend 5dr" })).toBe(true);
+    expect(await api.isValidManual({ make: "Ford", model: "Fiesta", transmission: "Manual", year: 2011, variant: "1.1 Trend 5dr" })).toBe(false);
+  });
   it("finds vehicles regardless of spacing and case", async () => {
     expect(await api.lookup("ab12 cde")).toMatchObject({ make: "Ford", model: "Fiesta" });
   });

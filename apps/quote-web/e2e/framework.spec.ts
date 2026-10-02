@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { completeCarRegistration, expectNoAxeViolations, rejectCookies, startQuote } from "./helpers";
+import { completeCarRegistration, expectNoAxeViolations, fillDate, rejectCookies, startQuote } from "./helpers";
 
 test.describe("route guard", () => {
   test("without a session, quote steps redirect to the start page", async ({ page }) => {
@@ -21,7 +21,7 @@ test.describe("route guard", () => {
   });
 });
 
-test("save and come back later keeps valid answers and shows the reference", async ({ page }) => {
+test("save and come back later keeps valid answers, and the quote can be resumed with its reference", async ({ page, browser }) => {
   await startQuote(page);
   await page.getByLabel("Car registration").fill("KM19 XYZ");
   await page.getByLabel("How many miles do you expect to drive in a year?").fill("lots");
@@ -29,12 +29,45 @@ test("save and come back later keeps valid answers and shows the reference", asy
 
   await expect(page).toHaveURL(/\/quote\/saved$/);
   await expect(page.getByRole("heading", { level: 1, name: "Your quote has been saved" })).toBeVisible();
-  await expect(page.getByTestId("quote-reference")).toHaveText(/^MQ-/);
+  const reference = (await page.getByTestId("quote-reference").textContent())!.trim();
+  expect(reference).toMatch(/^MQ-/);
   await expectNoAxeViolations(page);
 
   await page.getByRole("link", { name: "Continue your quote" }).click();
-  await expect(page.getByLabel("Car registration")).toHaveValue("KM19 XYZ");
+  // The registration was looked up on save; the invalid mileage was not kept.
+  await expect(page.getByRole("region", { name: "Your car" })).toContainText("Volkswagen Golf");
   await expect(page.getByLabel("How many miles do you expect to drive in a year?")).toHaveValue("");
+
+  // Resume on another device: wrong details give a generic message; the right ones restore the quote.
+  const other = await browser.newContext();
+  const resume = await other.newPage();
+  await resume.goto("/quote/resume");
+  await expectNoAxeViolations(resume);
+  await resume.getByLabel("Quote reference").fill(reference.toLowerCase());
+  await fillDate(resume, "What is your date of birth?", { day: "1", month: "1", year: "1990" });
+  await resume.getByRole("button", { name: "Continue your quote" }).click();
+  await expect(resume.getByTestId("error-summary")).toContainText("We could not find a saved quote with those details");
+
+  // Saved before date of birth was given: the car registration is the second factor.
+  await resume.getByLabel("Quote reference").fill(reference);
+  await resume.getByText("I saved my quote before giving my date of birth").click();
+  await resume.getByLabel("Car registration").fill("km19xyz");
+  await resume.getByRole("button", { name: "Continue your quote" }).click();
+  await expect(resume).toHaveURL(/\/quote\/car\/registration$/);
+  await expect(resume.getByRole("region", { name: "Your car" })).toContainText("Volkswagen Golf");
+  await other.close();
+});
+
+test("resume locks a reference after five failed attempts", async ({ page }) => {
+  await page.goto("/quote/resume");
+  await rejectCookies(page);
+  for (let attempt = 1; attempt <= 6; attempt++) {
+    await page.getByLabel("Quote reference").fill("MQ-AAAA-BBBB");
+    await fillDate(page, "What is your date of birth?", { day: "1", month: "1", year: "1990" });
+    await page.getByRole("button", { name: "Continue your quote" }).click();
+    await expect(page.getByTestId("error-summary")).toBeVisible();
+  }
+  await expect(page.getByTestId("error-summary")).toContainText("You’ve tried too many times. Try again in 15 minutes");
 });
 
 test.describe("cookie consent", () => {
@@ -90,12 +123,18 @@ test("steps work without JavaScript (progressive enhancement)", async ({ browser
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
   await page.goto("/quote/start");
+  await page.getByLabel("I confirm that I and any other drivers meet the conditions").check();
   await page.getByRole("button", { name: "Start now" }).click();
   await expect(page).toHaveURL(/\/quote\/car\/registration$/);
-  await page.getByLabel("Car registration").fill("AB12 CDE");
-  await page.getByRole("button", { name: "Continue" }).click();
+  // Find car is a submit button, so the lookup works without JavaScript.
+  await page.getByLabel("Car registration").fill("AB12CDE");
+  await page.getByRole("button", { name: "Find car", exact: true }).click();
+  await expect(page.getByRole("region", { name: "Your car" })).toContainText("Ford Fiesta");
+  await page.getByLabel("How many miles do you expect to drive in a year?").fill("9000");
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await expect(page.getByTestId("error-summary")).toBeVisible();
-  await expect(page.getByLabel("Car registration")).toHaveValue("AB12 CDE");
+  await expect(page.getByRole("region", { name: "Your car" })).toContainText("Ford Fiesta");
+  await expect(page.getByLabel("How many miles do you expect to drive in a year?")).toHaveValue("9000");
   await context.close();
 });
 

@@ -9,7 +9,8 @@ export class JourneyDefinitionError extends Error {
 export interface Journey extends JourneyDef {
   readonly stepById: ReadonlyMap<string, StepDef>;
   readonly stepByPath: ReadonlyMap<string, StepDef>;
-  readonly fieldById: ReadonlyMap<string, { field: FieldDef; step: StepDef }>;
+  /** Every field, including repeater item fields (with their parent repeater). */
+  readonly fieldById: ReadonlyMap<string, { field: FieldDef; step: StepDef; parent?: FieldDef }>;
 }
 
 const RESERVED_IDS = new Set(["entry", "today"]);
@@ -24,8 +25,21 @@ export function defineJourney(def: JourneyDef): Journey {
   const sectionIds = new Set(def.sections.map((s) => s.id));
   const stepById = new Map<string, StepDef>();
   const stepByPath = new Map<string, StepDef>();
-  const fieldById = new Map<string, { field: FieldDef; step: StepDef }>();
+  const fieldById = new Map<string, { field: FieldDef; step: StepDef; parent?: FieldDef }>();
   const conditions: Array<[string, Expr | undefined]> = [];
+
+  // Field ids are unique across the journey, including repeater item fields, because item
+  // conditions see the item's answers layered over the journey's.
+  const register = (field: FieldDef, step: StepDef, parent?: FieldDef) => {
+    if (!ID.test(field.id)) problems.push(`Field id "${field.id}" must be camelCase alphanumeric`);
+    if (RESERVED_IDS.has(field.id)) problems.push(`Field id "${field.id}" is reserved`);
+    if (fieldById.has(field.id)) problems.push(`Duplicate field id "${field.id}"`);
+    if (["radio", "select", "checkboxes", "typeahead"].includes(field.type) && !field.options?.length && !field.optionsFrom) {
+      problems.push(`Field "${field.id}" (${field.type}) needs options`);
+    }
+    fieldById.set(field.id, { field, step, parent });
+    conditions.push([`field ${field.id} showWhen`, field.showWhen]);
+  };
 
   for (const step of def.steps) {
     if (stepById.has(step.id)) problems.push(`Duplicate step id "${step.id}"`);
@@ -39,19 +53,32 @@ export function defineJourney(def: JourneyDef): Journey {
     for (const group of step.groups) {
       conditions.push([`group ${group.id} showWhen`, group.showWhen]);
       for (const field of group.fields) {
-        if (!ID.test(field.id)) problems.push(`Field id "${field.id}" must be camelCase alphanumeric`);
-        if (RESERVED_IDS.has(field.id)) problems.push(`Field id "${field.id}" is reserved`);
-        if (fieldById.has(field.id)) problems.push(`Duplicate field id "${field.id}"`);
-        if (["radio", "select", "checkboxes"].includes(field.type) && !field.options?.length) {
-          problems.push(`Field "${field.id}" (${field.type}) needs options`);
+        register(field, step);
+        if (field.type === "repeater") {
+          if (!field.repeater?.steps.length) problems.push(`Repeater "${field.id}" needs item steps`);
+          for (const itemStep of field.repeater?.steps ?? []) {
+            for (const itemGroup of itemStep.groups) {
+              conditions.push([`repeater ${field.id} group ${itemGroup.id} showWhen`, itemGroup.showWhen]);
+              for (const itemField of itemGroup.fields) {
+                if (itemField.type === "repeater") problems.push(`Repeater "${field.id}" cannot contain another repeater ("${itemField.id}")`);
+                register(itemField, step, field);
+              }
+            }
+          }
         }
-        fieldById.set(field.id, { field, step });
-        conditions.push([`field ${field.id} showWhen`, field.showWhen]);
       }
     }
   }
 
   const predicateNames = new Set(Object.keys(def.predicates ?? {}));
+  for (const { field } of fieldById.values()) {
+    if (field.optionsFrom && fieldById.get(field.optionsFrom.repeater)?.field.type !== "repeater") {
+      problems.push(`Field "${field.id}" takes options from "${field.optionsFrom.repeater}", which is not a repeater`);
+    }
+    for (const rule of field.validate ?? []) {
+      if (rule.rule === "notBeforeAnniversary" && !fieldById.has(rule.field)) problems.push(`Field "${field.id}" compares with unknown field "${rule.field}"`);
+    }
+  }
   for (const [where, expr] of conditions) {
     const refs = collectReferences(expr);
     for (const p of refs.preds) if (!predicateNames.has(p)) problems.push(`${where}: unknown predicate "${p}"`);

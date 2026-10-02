@@ -47,7 +47,7 @@ export default async function CheckPage() {
                 <dd>{row.answer}</dd>
                 <dd>
                   <Link href={row.changeHref}>
-                    Change<span className="visually-hidden"> {row.question.toLowerCase()}</span>
+                    Change <span className="visually-hidden">{row.question.toLowerCase()}</span>
                   </Link>
                 </dd>
               </div>
@@ -55,7 +55,7 @@ export default async function CheckPage() {
           </dl>
         </section>
       ))}
-      <InsetText>Demo: this is the end of the milestone 1 slice. The journey continues with the rest of “About you” in milestone 2.</InsetText>
+      <InsetText>Demo: this is the end of milestone 2. Your quote, add-ons and payment arrive in milestone 3.</InsetText>
       <SessionTimeoutHost remainingMs={remainingMs(session)} warningMs={config.sessionWarningMs} />
     </div>
   );

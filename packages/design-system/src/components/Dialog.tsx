@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { cx } from "../utils";
 
 export interface DialogProps {
@@ -19,6 +19,13 @@ export interface DialogProps {
   closeLabel?: string;
 }
 
+/**
+ * The open dialog element. Popovers (e.g. a typeahead's list) must render inside it: a modal
+ * <dialog> makes everything outside it inert, so a list portalled to <body> could not be used.
+ */
+const DialogContainerContext = createContext<Element | null>(null);
+export const useDialogContainer = () => useContext(DialogContainerContext);
+
 const sizes = { s: "max-w-[30rem]", m: "max-w-[40rem]", l: "max-w-[52rem]" };
 
 /**
@@ -31,6 +38,7 @@ export function Dialog({ open, title, children, onClose, describedBy, initialFoc
   const headingRef = useRef<HTMLHeadingElement>(null);
   const returnFocus = useRef<HTMLElement | null>(null);
   const titleId = useId();
+  const [container, setContainer] = useState<HTMLDialogElement | null>(null);
 
   useEffect(() => {
     const dialog = ref.current;
@@ -49,8 +57,12 @@ export function Dialog({ open, title, children, onClose, describedBy, initialFoc
   useEffect(() => () => returnFocus.current?.focus?.(), []);
 
   return (
+    <DialogContainerContext.Provider value={container}>
     <dialog
-      ref={ref}
+      ref={(node) => {
+        ref.current = node;
+        setContainer(node);
+      }}
       aria-labelledby={titleId}
       aria-describedby={describedBy}
       onCancel={(event) => {
@@ -77,5 +89,6 @@ export function Dialog({ open, title, children, onClose, describedBy, initialFoc
         {children}
       </div>
     </dialog>
+    </DialogContainerContext.Provider>
   );
 }

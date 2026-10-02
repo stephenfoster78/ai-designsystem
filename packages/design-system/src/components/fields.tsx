@@ -246,18 +246,21 @@ export interface DateInputProps extends QuestionProps {
   errorParts?: Array<"day" | "month" | "year">;
   /** "bday" adds birthday autocomplete tokens (WCAG 1.3.5). */
   autocomplete?: "bday";
+  /** "month" shows month and year only. */
+  precision?: "day" | "month";
 }
 
 /** Memorable-date input: three labelled boxes in a fieldset, numeric keypad on mobile. */
-export function DateInput({ id, label, hint, error, asPageHeading, value, errorParts, autocomplete }: DateInputProps) {
+export function DateInput({ id, label, hint, error, asPageHeading, value, errorParts, autocomplete, precision = "day" }: DateInputProps) {
   const highlighted = new Set(error ? (errorParts?.length ? errorParts : ["day", "month", "year"]) : []);
-  const parts = [
+  const allParts = [
     { key: "day" as const, label: "Day", width: "w-[5ch]" },
     { key: "month" as const, label: "Month", width: "w-[5ch]" },
     { key: "year" as const, label: "Year", width: "w-[8ch]" },
   ];
+  const parts = precision === "month" ? allParts.slice(1) : allParts;
   // Focus target for the error summary: the first part in error.
-  const firstPart = parts.find((p) => highlighted.has(p.key))?.key ?? "day";
+  const firstPart = parts.find((p) => highlighted.has(p.key))?.key ?? parts[0]!.key;
   return (
     <FormGroup error={Boolean(error)}>
       <fieldset role="group" aria-describedby={describedBy(hint && hintId(id), error && errorId(id))}>

@@ -41,7 +41,7 @@ export default async function StepPage({ params }: { params: Params }) {
   if (!access.ok) redirect(access.redirectTo ? paths.step(access.redirectTo) : paths.check);
 
   const session = await touchQuoteSession(quote.session);
-  const view = buildStepView(step, services.content);
+  const view = buildStepView(step, services.content, quote.draft.answers);
   const { previous } = navigation(motorJourney, step.id, ctx);
   const progress = sectionProgress(motorJourney, ctx, step.id).map((p) => ({
     id: p.section.id,
@@ -57,6 +57,8 @@ export default async function StepPage({ params }: { params: Params }) {
     for (const field of group.fields) serverVisible[field.id] = holds(field.showWhen, ctx, motorJourney.predicates);
   }
 
+  const prefillReg = quote.draft.entry.prefill?.reg;
+
   // Strip functions (predicates) before passing the step definition to the client.
   const stepForClient = JSON.parse(JSON.stringify(step)) as typeof step;
 
@@ -69,9 +71,10 @@ export default async function StepPage({ params }: { params: Params }) {
           step={stepForClient}
           view={view}
           action={submitStep.bind(null, step.id)}
-          values={initialValues(step, quote.draft.answers, { registration: quote.draft.entry.prefill?.reg })}
+          values={initialValues(step, quote.draft.answers, { registration: prefillReg ? { reg: prefillReg } : undefined })}
           ctx={ctx}
           serverVisible={serverVisible}
+          autoLookup={prefillReg && !quote.draft.answers.registration ? "registration" : undefined}
         />
       </div>
       <SessionTimeoutHost remainingMs={remainingMs(session)} warningMs={config.sessionWarningMs} />

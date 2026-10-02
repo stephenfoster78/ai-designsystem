@@ -17,7 +17,9 @@
     "test": "pnpm tokens && vitest run",
     "test:watch": "vitest",
     "test:e2e": "pnpm --filter quote-web test:e2e",
-    "check": "pnpm typecheck && pnpm lint && pnpm test"
+    "check": "pnpm typecheck && pnpm lint && pnpm test",
+    "storybook": "pnpm tokens && pnpm --filter showcase storybook",
+    "build-storybook": "pnpm tokens && pnpm --filter showcase build-storybook"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",

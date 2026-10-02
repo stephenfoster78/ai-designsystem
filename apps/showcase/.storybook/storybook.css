@@ -1,0 +1,6 @@
+@import "tailwindcss";
+@import "@qf/tokens/css";
+@import "@qf/tokens/tailwind";
+@import "@qf/design-system/styles.css";
+
+@source "../../../packages/design-system/src";
